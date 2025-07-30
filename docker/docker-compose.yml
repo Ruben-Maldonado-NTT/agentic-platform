@@ -1,0 +1,360 @@
+services:
+
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik
+    restart: always
+    command:
+      - "--api.insecure=true"
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8081:8080"  # dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: agent_admin
+      POSTGRES_PASSWORD: agent_pass
+      POSTGRES_DB: agentic_db
+    volumes:
+      - ../data/postgres:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  zookeeper:
+    image: bitnami/zookeeper:latest
+    container_name: zookeeper
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: yes
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: bitnami/kafka:3.5
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_CFG_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      ALLOW_PLAINTEXT_LISTENER: yes
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: true
+    depends_on:
+      - zookeeper
+
+  fastapi:
+    build: ../api
+    container_name: fastapi
+    restart: always
+    volumes:
+      - ../api:/app
+    env_file:
+      - ../services/.env.docker
+    ports:
+      - "8000:8000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.fastapi.rule=Host(`api.localhost`)"
+      - "traefik.http.services.fastapi.loadbalancer.server.port=8000"
+    depends_on:
+      - postgres
+      - kafka
+
+  # agentic-ui:
+  #   build: ../agentic-ui
+  #   container_name: agentic-ui
+  #   restart: always
+  #   ports:
+  #     - "3000:3000"
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.ui.rule=Host(`ui.localhost`)"
+  #     - "traefik.http.services.ui.loadbalancer.server.port=3000"
+  #   volumes:
+  #     - ../agentic-ui:/app
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pgadmin.rule=Host(`pgadmin.localhost`)"
+      - "traefik.http.services.pgadmin.loadbalancer.server.port=80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+
+  akhq:
+    image: tchiotludo/akhq
+    container_name: akhq
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      AKHQ_CONFIGURATION: |
+        akhq:
+          connections:
+            docker-kafka:
+              properties:
+                bootstrap.servers: "kafka:9092"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.akhq.rule=Host(`akhq.localhost`)"
+      - "traefik.http.services.akhq.loadbalancer.server.port=8080"
+    depends_on:
+      - kafka
+
+  mcp-registry:
+    build: ../services/mcp-registry-service
+    container_name: mcp-registry
+    restart: always
+    env_file:
+      - ../services/.env.docker
+    ports:
+      - "8100:8100"
+    environment:
+      DATABASE_URL: postgresql://agent_admin:agent_pass@postgres:5432/agentic_db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mcp-registry.rule=Host(`mcps.localhost`)"
+      - "traefik.http.services.mcp-registry.loadbalancer.server.port=8100"
+    depends_on:
+      - postgres
+
+  # PLATFORM SERVICES
+  platform-api:
+    build: ../services/platform-api
+    container_name: platform-api
+    restart: always
+    env_file:
+      - ../services/.env.docker
+    ports:
+      - "8200:8000"
+    depends_on:
+      - postgres
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.platform-api.rule=Host(`platform-api.localhost`)"
+      - "traefik.http.services.platform-api.loadbalancer.server.port=8000"
+
+  scaffolding-service:
+    build: ../services/scaffolding-service
+    container_name: scaffolding-service
+    restart: always
+    env_file:
+      - ../services/.env.docker
+    ports:
+      - "8201:8000"
+    depends_on:
+      - platform-api
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.scaffolding-service.rule=Host(`scaffolding.localhost`)"
+      - "traefik.http.services.scaffolding-service.loadbalancer.server.port=8000"
+
+  agency-deployer:
+    build: ../services/agency-deployer
+    container_name: agency-deployer
+    restart: always
+    env_file:
+      - ../services/.env.docker
+    ports:
+      - "8202:8000"
+    depends_on:
+      - platform-api
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.agency-deployer.rule=Host(`deployer.localhost`)"
+      - "traefik.http.services.agency-deployer.loadbalancer.server.port=8000"
+
+  llm-facade:
+    build: ../services/llm-facade
+    container_name: llm-facade
+    restart: always
+    env_file:
+      - ../services/.env.docker
+    ports:
+      - "8203:8000"
+    depends_on:
+      - platform-api
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.llm-facade.rule=Host(`llm.localhost`)"
+      - "traefik.http.services.llm-facade.loadbalancer.server.port=8000"
+
+  discovery-service:
+    build: ../services/discovery-service
+    container_name: discovery-service
+    restart: always
+    env_file:
+      - ../services/.env.docker
+    ports:
+      - "8204:8000"
+    depends_on:
+      - postgres
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.discovery-service.rule=Host(`discovery.localhost`)"
+      - "traefik.http.services.discovery-service.loadbalancer.server.port=8000"
+
+  mcp-executor-service:
+    build: ../services/mcp-executor-service
+    container_name: mcp-executor-service
+    restart: always
+    env_file:
+      - ../services/.env.docker
+    ports:
+      - "8205:8000"
+    depends_on:
+      - mcp-registry
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mcp-executor.rule=Host(`mcp-executor.localhost`)"
+      - "traefik.http.services.mcp-executor.loadbalancer.server.port=8000"
+
+  runtime-controller:
+    build: ../services/runtime-controller
+    container_name: runtime-controller
+    restart: always
+    env_file:
+      - ../services/.env.docker
+    ports:
+      - "8206:8000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock  # ✅ acceso al daemon Docker
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.runtime-controller.rule=Host(`runtime.localhost`)"
+      - "traefik.http.services.runtime-controller.loadbalancer.server.port=8000"
+
+  agent-repo-generator:
+    build: ../services/agent-repo-generator
+    container_name: agent-repo-generator
+    restart: always
+    env_file:
+      - ../services/.env.docker
+    ports:
+      - "8207:8000"
+    depends_on:
+      - platform-api
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.repo-generator.rule=Host(`repo.localhost`)"
+      - "traefik.http.services.repo-generator.loadbalancer.server.port=8000"
+
+  auth-service:
+    build: ../services/auth-service
+    container_name: auth-service
+    restart: always
+    env_file:
+      - ../services/.env.docker
+    ports:
+      - "8208:8000"
+    depends_on:
+      - postgres
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.auth-service.rule=Host(`auth.localhost`)"
+      - "traefik.http.services.auth-service.loadbalancer.server.port=8000"
+
+  metrics-service:
+    build: ../services/metrics-service
+    container_name: metrics-service
+    restart: always
+    env_file:
+      - ../services/.env.docker
+    ports:
+      - "8209:8000"
+    depends_on:
+      - postgres
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.metrics-service.rule=Host(`metrics.localhost`)"
+      - "traefik.http.services.metrics-service.loadbalancer.server.port=8000"
+
+  # AGENT SERVICES
+  agent-runner:
+    build: ../agents/agent-runner
+    container_name: agent-runner
+    restart: always
+    env_file:
+      - ../services/.env.docker
+    ports:
+      - "8001:8000"
+    depends_on:
+      - kafka
+      - mcp-registry
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.agent-runner.rule=Host(`agent-runner.localhost`)"
+      - "traefik.http.services.agent-runner.loadbalancer.server.port=8000"
+
+  agent-coordinator:
+    build: ../agents/agent-coordinator
+    container_name: agent-coordinator
+    restart: always
+    env_file:
+      - ../services/.env.docker
+    ports:
+      - "8002:8000"
+    depends_on:
+      - kafka
+      - mcp-registry
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.agent-coordinator.rule=Host(`agent-coordinator.localhost`)"
+      - "traefik.http.services.agent-coordinator.loadbalancer.server.port=8000"
+
+  agent-evaluator:
+    build: ../agents/agent-evaluator
+    container_name: agent-evaluator
+    restart: always
+    env_file:
+      - ../services/.env.docker
+    ports:
+      - "8003:8000"
+    depends_on:
+      - kafka
+      - mcp-registry
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.agent-evaluator.rule=Host(`agent-evaluator.localhost`)"
+      - "traefik.http.services.agent-evaluator.loadbalancer.server.port=8000"
+
+  agency-orchestrator:
+    build: ../agents/agency-orchestrator
+    container_name: agency-orchestrator
+    restart: always
+    env_file:
+      - ../services/.env.docker
+    ports:
+      - "8004:8000"
+    depends_on:
+      - kafka
+      - mcp-registry
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.agency-orchestrator.rule=Host(`agency-orchestrator.localhost`)"
+      - "traefik.http.services.agency-orchestrator.loadbalancer.server.port=8000"
+
+volumes:
+  postgres_data:
+  pgadmin_data:

@@ -1,0 +1,10 @@
+{
+  "name": "context.memory",
+  "description": "Provee acceso a memoria contextual de corto plazo",
+  "entrypoint": "mcp.py",
+  "class": "ContextMemoryMCP",
+  "version": "0.1.0",
+  "inputs": {
+    "window_size": "int"
+  }
+}

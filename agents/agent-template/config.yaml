@@ -1,0 +1,5 @@
+agent_id: agent_001
+name: test-agent
+role: connector
+
+mcp_registry_url: http://mcps.localhost

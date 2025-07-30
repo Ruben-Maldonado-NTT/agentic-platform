@@ -1,0 +1,85 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.pdb
+*.egg-info/
+*.egg
+*.env
+.env
+.env.*
+.venv/
+venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Jupyter
+.ipynb_checkpoints
+
+# VSCode
+.vscode/
+.history/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+dist/
+build/
+
+# Docker
+**/docker-compose.override.yml
+**/docker-compose.local.yml
+
+# Logs
+*.log
+logs/
+log/
+
+# Data & DB
+data/
+*.sqlite3
+*.db
+*.sqlite
+
+# Coverage & test
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# Misc
+*.swp
+*.swo
+*.bak
+*.tmp
+*.orig
+
+# System
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# IDEs
+.idea/
+*.iml
+
+# Certs & keys
+*.pem
+*.key
+*.crt
+*.pid

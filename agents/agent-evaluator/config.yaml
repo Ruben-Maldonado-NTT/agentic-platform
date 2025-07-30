@@ -1,0 +1,5 @@
+agent_id: agent-evaluator
+name: "Evaluador Estratégico"
+role: evaluator
+
+mcp_registry_url: http://mcps.localhost

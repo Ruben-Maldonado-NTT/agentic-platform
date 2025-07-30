@@ -1,0 +1,5 @@
+agent_id: agent-runner
+name: "Ejecutor de Agente"
+role: runner
+
+mcp_registry_url: http://mcps.localhost

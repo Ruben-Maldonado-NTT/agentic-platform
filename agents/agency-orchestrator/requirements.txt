@@ -1,0 +1,16 @@
+# YAML config parser
+pyyaml==6.0.1
+
+# HTTP client for mcp-registry
+requests==2.31.0
+
+# Logging (standard lib, no instalación)
+
+# Si usas Kafka (comentado para ahora, descomenta cuando se necesite)
+# kafka-python==2.0.2
+
+# Si usas LangGraph (más adelante)
+# langgraph==0.0.38
+
+# Si usas async con httpx
+# httpx==0.27.0

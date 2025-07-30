@@ -1,0 +1,5 @@
+agent_id: agency-orchestrator
+name: "Orquestador de Agencia"
+role: orchestrator
+
+mcp_registry_url: http://mcps.localhost

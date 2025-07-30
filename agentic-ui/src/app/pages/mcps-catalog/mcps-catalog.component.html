@@ -1,0 +1,34 @@
+
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>Mcps Catalog (Mock)</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <p>Esta es una vista mockeada de <strong>mcps-catalog</strong> usando Angular Material.</p>
+    <mat-form-field appearance="outline">
+      <mat-label>Buscar</mat-label>
+      <input matInput placeholder="Filtrar elementos..." />
+    </mat-form-field>
+    <mat-table [dataSource]="[{
+      id: 1, name: 'Elemento de prueba', status: 'activo'
+    }]" class="mat-elevation-z2">
+      <ng-container matColumnDef="id">
+        <mat-header-cell *matHeaderCellDef>ID</mat-header-cell>
+        <mat-cell *matCellDef="let element">{{element.id}}</mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="name">
+        <mat-header-cell *matHeaderCellDef>Nombre</mat-header-cell>
+        <mat-cell *matCellDef="let element">{{element.name}}</mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="status">
+        <mat-header-cell *matHeaderCellDef>Estado</mat-header-cell>
+        <mat-cell *matCellDef="let element">{{element.status}}</mat-cell>
+      </ng-container>
+
+      <mat-header-row *matHeaderRowDef="['id', 'name', 'status']"></mat-header-row>
+      <mat-row *matRowDef="let row; columns: ['id', 'name', 'status'];"></mat-row>
+    </mat-table>
+  </mat-card-content>
+</mat-card>

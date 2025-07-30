@@ -1,0 +1,53 @@
+services:
+
+  agent-runner:
+    build: ../agents/agent-runner
+    container_name: agent-runner
+    restart: always
+    env_file:
+      - ../services/.env.docker
+    ports:
+      - "8001:8000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.agent-runner.rule=Host(`agent-runner.localhost`)"
+      - "traefik.http.services.agent-runner.loadbalancer.server.port=8000"
+
+  agent-coordinator:
+    build: ../agents/agent-coordinator
+    container_name: agent-coordinator
+    restart: always
+    env_file:
+      - ../services/.env.docker
+    ports:
+      - "8002:8000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.agent-coordinator.rule=Host(`agent-coordinator.localhost`)"
+      - "traefik.http.services.agent-coordinator.loadbalancer.server.port=8000"
+
+  agent-evaluator:
+    build: ../agents/agent-evaluator
+    container_name: agent-evaluator
+    restart: always
+    env_file:
+      - ../services/.env.docker
+    ports:
+      - "8003:8000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.agent-evaluator.rule=Host(`agent-evaluator.localhost`)"
+      - "traefik.http.services.agent-evaluator.loadbalancer.server.port=8000"
+
+  agency-orchestrator:
+    build: ../agents/agency-orchestrator
+    container_name: agency-orchestrator
+    restart: always
+    env_file:
+      - ../services/.env.docker
+    ports:
+      - "8004:8000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.agency-orchestrator.rule=Host(`agency-orchestrator.localhost`)"
+      - "traefik.http.services.agency-orchestrator.loadbalancer.server.port=8000"

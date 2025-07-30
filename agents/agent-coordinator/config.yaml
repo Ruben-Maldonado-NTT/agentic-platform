@@ -1,0 +1,5 @@
+agent_id: agent-coordinator
+name: "Coordinador General"
+role: coordinator
+
+mcp_registry_url: http://mcps.localhost
