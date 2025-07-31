@@ -18,6 +18,7 @@ import { ReposComponent } from './pages/repos/repos.component';
 import { UsersComponent } from './pages/users/users.component';
 import { AgentNodeComponent } from './pages/designer/agent-node.component';
 import { AgencyGroupComponent } from './pages/designer/agency-group.component';
+import { FilterPipe } from './shared/pipes/filter.pipe';
 
 import { FormsModule,ReactiveFormsModule } from '@angular/forms';
 import { NgDrawFlowComponent, provideNgDrawFlowConfigs } from '@ng-draw-flow/core';
@@ -25,6 +26,7 @@ import { NgDrawFlowComponent, provideNgDrawFlowConfigs } from '@ng-draw-flow/cor
 
 @NgModule({
   declarations: [
+    FilterPipe,
     AppComponent,
     DashboardComponent,
     ProjectsComponent,

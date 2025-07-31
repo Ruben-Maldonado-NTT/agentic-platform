@@ -1,33 +1,26 @@
 <div class="flex h-[calc(100vh-5rem)]">
-  <!-- Sidebar -->
-  <aside class="w-64 bg-white border-r p-4 space-y-4">
+  <!-- Sidebar izquierda -->
+  <aside class="w-72 bg-white border-r p-4 space-y-4 overflow-y-auto">
+    <!-- Agencias -->
     <h3 class="text-lg font-semibold">Agencias</h3>
     <button
       class="mb-4 w-full bg-indigo-600 text-white text-sm px-2 py-2 rounded hover:bg-indigo-700"
-      (click)="addAgency('Agencia ' + nodeCounter)"
+      (click)="addAgency('Agencia ' + nodeCounter)" 
     >
       ➕ Agregar Agencia
     </button>
 
-    <h3 class="text-lg font-semibold">Agentes disponibles</h3>
-    <div *ngFor="let agent of availableAgents" class="border rounded p-3 mb-2 shadow-sm">
-      <div class="text-sm font-medium">{{ agent.name }}</div>
-      <div class="text-xs text-gray-600 mb-2">{{ agent.role }}</div>
+    <!-- Agentes disponibles -->
+    <!-- Botón para agregar agentes (modal de tabla) -->
+    <h3 class="text-lg font-semibold mt-6">Agentes</h3>
+    <button
+      class="w-full bg-blue-600 text-white text-sm px-2 py-2 rounded hover:bg-blue-700"
+      (click)="openAgentSelectorModal()"
+    >
+      ➕ Agregar Agentes
+    </button>
 
-      <label class="block text-xs text-gray-500 mb-1">Asignar a agencia:</label>
-      <select [(ngModel)]="agent.selectedAgency" class="w-full border px-2 py-1 rounded text-sm mb-2">
-        <option [ngValue]="null">Sin agencia</option>
-        <option *ngFor="let agency of currentAgencies" [value]="agency.id">{{ agency.name }}</option>
-      </select>
-
-      <button
-        (click)="addAgent(agent)"
-        class="w-full bg-blue-600 text-white text-sm px-2 py-1 rounded hover:bg-blue-700"
-      >
-        Agregar
-      </button>
-    </div>
-
+    <!-- Exportar JSON -->
     <button
       (click)="exportJSON()"
       class="w-full bg-green-600 text-white text-sm px-2 py-2 rounded hover:bg-green-700"
@@ -36,8 +29,122 @@
     </button>
   </aside>
 
-  <!-- Lienzo central -->
-  <main class="flex-1 bg-gray-50 p-4 overflow-auto">
-    <ng-draw-flow [formControl]="form" style="height: 100%; min-height: 600px;"></ng-draw-flow>
+  <!-- Área central de diseño -->
+  <main class="flex-1 bg-gray-50 relative">
+    <ng-draw-flow
+      [formControl]="form"
+      (nodeMoved)="onNodeMoved($event)"
+      (nodeSelected)="onNodeSelected($event)"
+      style="height: 100%; min-height: 100vh;"
+    ></ng-draw-flow>
+
+    <!-- Panel lateral derecho de edición -->
+    <div
+      *ngIf="selectedNode"
+      class="absolute top-0 right-0 w-80 h-full bg-white border-l shadow p-4 space-y-4 z-10"
+    >
+      <h3 class="text-lg font-semibold">Editar Agente</h3>
+
+      <label class="block text-sm">Nombre</label>
+      <input
+        [(ngModel)]="selectedNode.data.name"
+        class="w-full border px-2 py-1 rounded"
+      />
+
+      <label class="block text-sm mt-2">Rol</label>
+      <input
+        [(ngModel)]="selectedNode.data.role"
+        class="w-full border px-2 py-1 rounded"
+      />
+
+      <label class="block text-sm mt-2">Agencia</label>
+      <select [(ngModel)]="selectedNode.data.agencyId" class="w-full border px-2 py-1 rounded">
+        <option [ngValue]="null">Sin agencia</option>
+        <option *ngFor="let agency of currentAgencies" [value]="agency.id">
+          {{ agency.name }}
+        </option>
+      </select>
+
+      <button
+        class="w-full bg-green-600 text-white py-2 mt-4 rounded hover:bg-green-700"
+        (click)="updateNode()"
+      >
+        Guardar cambios
+      </button>
+      <button
+        class="w-full text-gray-500 hover:text-red-600 text-sm"
+        (click)="selectedNode = null"
+      >
+        Cancelar
+      </button>
+    </div>
   </main>
+
+  <!-- Modal flotante para selección de agentes -->
+  <div
+    *ngIf="showAgentSelectorModal"
+    class="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center"
+  >
+    <div class="bg-white w-[700px] max-h-[80vh] overflow-y-auto p-6 rounded-lg shadow-xl border">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold">Agregar agentes a una agencia</h2>
+        <button class="text-gray-400 hover:text-black" (click)="closeAgentSelectorModal()">✖</button>
+      </div>
+
+      <!-- Filtro por nombre -->
+      <input
+        type="text"
+        placeholder="Buscar agente por nombre..."
+        [(ngModel)]="agentSearchQuery"
+        class="w-full border px-3 py-2 rounded mb-4 text-sm"
+      />
+
+      <!-- Selección de agencia -->
+      <label class="block mb-1 text-sm">Seleccionar agencia</label>
+      <select
+        [(ngModel)]="selectedAgencyForAgents"
+        class="w-full border px-3 py-2 rounded mb-4 text-sm"
+      >
+        <option [ngValue]="null">-- Elige una agencia --</option>
+        <option *ngFor="let agency of currentAgencies" [value]="agency.id">{{ agency.name }}</option>
+      </select>
+
+      <!-- Tabla de agentes -->
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-left border-b">
+            <th class="py-2">✔</th>
+            <th class="py-2">Nombre</th>
+            <th class="py-2">Rol</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            *ngFor="let agent of availableAgents | filter:agentSearchQuery"
+            class="border-b hover:bg-gray-50"
+          >
+            <td class="py-2">
+              <input
+                type="checkbox"
+                [checked]="selectedAgentIds.includes(agent.id)"
+                (change)="onAgentCheckboxChange(agent.id, $event.target.checked)"
+              />
+            </td>
+            <td class="py-2">{{ agent.name }}</td>
+            <td class="py-2">{{ agent.role }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Botón para confirmar -->
+      <button
+        class="mt-6 w-full bg-blue-600 text-white text-sm px-4 py-2 rounded hover:bg-blue-700"
+        (click)="addSelectedAgentsToAgency()"
+        [disabled]="!selectedAgencyForAgents || selectedAgentIds.length === 0"
+      >
+        ➕ Agregar {{ selectedAgentIds.length }} agente(s) a la agencia
+      </button>
+    </div>
+  </div>
+
 </div>
