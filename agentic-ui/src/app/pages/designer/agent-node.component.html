@@ -1,0 +1,12 @@
+<df-input *ngIf="!startNode" [connectorData]="{ nodeId, connectorId: nodeId + '-in', single: false }"></df-input>
+
+<div class="text-xs text-gray-400 italic">
+  Agencia: {{ model?.agencyId || 'ninguna' }}
+</div>
+
+<div class="bg-white border rounded shadow p-2 text-sm max-w-[160px] text-center">
+  <strong>{{ model?.name || 'Sin nombre' }}</strong><br />
+  <span class="text-xs text-gray-600">{{ model?.role || 'sin rol' }}</span>
+</div>
+
+<df-output *ngIf="!endNode" [connectorData]="{ nodeId, connectorId: nodeId + '-out', single: false }"></df-output>

@@ -91,7 +91,7 @@ sudo nano /etc/hosts
 127.0.0.1 pgadmin.localhost
 127.0.0.1 akhq.localhost
 
-# Platform ervices
+# Platform Services
 127.0.0.1 platform-api.localhost
 127.0.0.1 scaffolding.localhost
 127.0.0.1 deployer.localhost

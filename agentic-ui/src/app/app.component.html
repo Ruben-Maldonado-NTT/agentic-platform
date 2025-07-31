@@ -1,27 +1,48 @@
+<div class="flex h-screen bg-gray-100 font-inter text-gray-900">
+  <!-- Sidebar -->
+  <aside class="w-64 bg-white border-r border-gray-200 flex flex-col">
+    <div class="p-4 text-lg font-semibold border-b border-gray-200">Agentic</div>
+    <nav class="flex-1 p-2 space-y-2">
+      <a routerLink="/dashboard" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">
+        <span class="material-icons">dashboard</span> Dashboard
+      </a>
+      <a routerLink="/projects" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">
+        <span class="material-icons">folder</span> Projects
+      </a>
+      <a routerLink="/designer" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">
+        <span class="material-icons">schema</span> Designer
+      </a>
+      <a routerLink="/agents-catalog" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">
+        <span class="material-icons">account_tree</span> Agents Catalog
+      </a>
+      <a routerLink="/mcps-catalog" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">
+        <span class="material-icons">extension</span> MCP Catalog
+      </a>
+      <a routerLink="/mcps-manage" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">
+        <span class="material-icons">tune</span> Manage MCPs
+      </a>
+      <a routerLink="/llms" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">
+        <span class="material-icons">memory</span> LLMs
+      </a>
+      <a routerLink="/test" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">
+        <span class="material-icons">chat_bubble_outline</span> Test
+      </a>
+      <a routerLink="/repos" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">
+        <span class="material-icons">code</span> Repos
+      </a>
+      <a routerLink="/users" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">
+        <span class="material-icons">people_outline</span> Users
+      </a>
+    </nav>
+  </aside>
 
-<mat-sidenav-container class="sidenav-container">
-  <mat-sidenav mode="side" opened class="sidenav">
-    <mat-toolbar color="primary">Agentic</mat-toolbar>
-    <mat-nav-list>
-      <a mat-list-item routerLink="/dashboard">Dashboard</a>
-      <a mat-list-item routerLink="/projects">Projects</a>
-      <a mat-list-item routerLink="/designer">Designer</a>
-      <a mat-list-item routerLink="/agents-catalog">Agents Catalog</a>
-      <a mat-list-item routerLink="/mcps-catalog">MCP Catalog</a>
-      <a mat-list-item routerLink="/mcps-manage">Manage MCPs</a>
-      <a mat-list-item routerLink="/llms">LLMs</a>
-      <a mat-list-item routerLink="/test">Test</a>
-      <a mat-list-item routerLink="/repos">Repos</a>
-      <a mat-list-item routerLink="/users">Users</a>
-    </mat-nav-list>
-  </mat-sidenav>
-
-  <mat-sidenav-content>
-    <mat-toolbar color="primary">
-      <span>Agent Platform UI</span>
-    </mat-toolbar>
-    <div class="main-content">
+  <!-- Main Content -->
+  <div class="flex-1 flex flex-col">
+    <header class="bg-white border-b border-gray-200 px-4 py-2">
+      <h1 class="text-lg font-semibold">Agent Platform UI</h1>
+    </header>
+    <main class="flex-1 overflow-auto p-4">
       <router-outlet></router-outlet>
-    </div>
-  </mat-sidenav-content>
-</mat-sidenav-container>
+    </main>
+  </div>
+</div>

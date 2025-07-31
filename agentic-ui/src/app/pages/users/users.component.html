@@ -1,34 +1,27 @@
+<div class="p-4 space-y-4">
+  <h2 class="text-2xl font-semibold">Gestión de Usuarios</h2>
 
-<mat-card>
-  <mat-card-header>
-    <mat-card-title>Users (Mock)</mat-card-title>
-  </mat-card-header>
-  <mat-card-content>
-    <p>Esta es una vista mockeada de <strong>users</strong> usando Angular Material.</p>
-    <mat-form-field appearance="outline">
-      <mat-label>Buscar</mat-label>
-      <input matInput placeholder="Filtrar elementos..." />
-    </mat-form-field>
-    <mat-table [dataSource]="[{
-      id: 1, name: 'Elemento de prueba', status: 'activo'
-    }]" class="mat-elevation-z2">
-      <ng-container matColumnDef="id">
-        <mat-header-cell *matHeaderCellDef>ID</mat-header-cell>
-        <mat-cell *matCellDef="let element">{{element.id}}</mat-cell>
-      </ng-container>
-
-      <ng-container matColumnDef="name">
-        <mat-header-cell *matHeaderCellDef>Nombre</mat-header-cell>
-        <mat-cell *matCellDef="let element">{{element.name}}</mat-cell>
-      </ng-container>
-
-      <ng-container matColumnDef="status">
-        <mat-header-cell *matHeaderCellDef>Estado</mat-header-cell>
-        <mat-cell *matCellDef="let element">{{element.status}}</mat-cell>
-      </ng-container>
-
-      <mat-header-row *matHeaderRowDef="['id', 'name', 'status']"></mat-header-row>
-      <mat-row *matRowDef="let row; columns: ['id', 'name', 'status'];"></mat-row>
-    </mat-table>
-  </mat-card-content>
-</mat-card>
+  <div class="overflow-x-auto bg-white rounded shadow">
+    <table class="min-w-full text-sm text-left border-collapse">
+      <thead class="bg-gray-100 border-b">
+        <tr>
+          <th class="p-3">Nombre</th>
+          <th class="p-3">Email</th>
+          <th class="p-3">Rol</th>
+          <th class="p-3 text-center">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of users" class="border-b hover:bg-gray-50">
+          <td class="p-3">{{ user.name }}</td>
+          <td class="p-3">{{ user.email }}</td>
+          <td class="p-3 capitalize">{{ user.role }}</td>
+          <td class="p-3 flex justify-center gap-2 text-sm">
+            <button (click)="changeRole(user)" class="text-blue-600 hover:underline">Cambiar rol</button>
+            <button (click)="deleteUser(user)" class="text-red-600 hover:underline">Eliminar</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

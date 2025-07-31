@@ -1,34 +1,29 @@
+<div class="p-4 space-y-4">
+  <h2 class="text-2xl font-semibold">Repositorios de Agentes</h2>
 
-<mat-card>
-  <mat-card-header>
-    <mat-card-title>Repos (Mock)</mat-card-title>
-  </mat-card-header>
-  <mat-card-content>
-    <p>Esta es una vista mockeada de <strong>repos</strong> usando Angular Material.</p>
-    <mat-form-field appearance="outline">
-      <mat-label>Buscar</mat-label>
-      <input matInput placeholder="Filtrar elementos..." />
-    </mat-form-field>
-    <mat-table [dataSource]="[{
-      id: 1, name: 'Elemento de prueba', status: 'activo'
-    }]" class="mat-elevation-z2">
-      <ng-container matColumnDef="id">
-        <mat-header-cell *matHeaderCellDef>ID</mat-header-cell>
-        <mat-cell *matCellDef="let element">{{element.id}}</mat-cell>
-      </ng-container>
-
-      <ng-container matColumnDef="name">
-        <mat-header-cell *matHeaderCellDef>Nombre</mat-header-cell>
-        <mat-cell *matCellDef="let element">{{element.name}}</mat-cell>
-      </ng-container>
-
-      <ng-container matColumnDef="status">
-        <mat-header-cell *matHeaderCellDef>Estado</mat-header-cell>
-        <mat-cell *matCellDef="let element">{{element.status}}</mat-cell>
-      </ng-container>
-
-      <mat-header-row *matHeaderRowDef="['id', 'name', 'status']"></mat-header-row>
-      <mat-row *matRowDef="let row; columns: ['id', 'name', 'status'];"></mat-row>
-    </mat-table>
-  </mat-card-content>
-</mat-card>
+  <div class="overflow-x-auto bg-white rounded shadow">
+    <table class="min-w-full text-sm text-left border-collapse">
+      <thead class="bg-gray-100 border-b">
+        <tr>
+          <th class="p-3">Agente</th>
+          <th class="p-3">Repositorio</th>
+          <th class="p-3">Última actualización</th>
+          <th class="p-3 text-center">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let repo of repos" class="border-b hover:bg-gray-50">
+          <td class="p-3">{{ repo.agent }}</td>
+          <td class="p-3 underline text-blue-600 cursor-pointer" (click)="viewRepo(repo)">
+            {{ repo.name }}
+          </td>
+          <td class="p-3">{{ repo.last_updated }}</td>
+          <td class="p-3 flex justify-center gap-2 text-sm">
+            <button (click)="cloneRepo(repo)" class="text-green-600 hover:underline">Clonar</button>
+            <button (click)="downloadRepo(repo)" class="text-blue-600 hover:underline">Descargar</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -18,10 +18,7 @@
             "polyfills": "src/polyfills.ts",
             "tsConfig": "tsconfig.app.json",
             "assets": ["src/assets"],
-            "styles": [
-              "@angular/material/prebuilt-themes/indigo-pink.css",
-              "src/styles.css"
-            ],
+            "styles": ["src/styles.css"],
             "scripts": []
           }
         },
@@ -36,6 +33,6 @@
   },
   "defaultProject": "agent-platform-ui",
   "cli": {
-    "analytics": "ee0837d9-ed17-4073-9051-272801f59150"
+    "analytics": "cbf6d9e8-edf1-4356-902c-959fcc749206"
   }
 }

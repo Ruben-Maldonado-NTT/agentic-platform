@@ -1,34 +1,43 @@
+<div class="flex h-[calc(100vh-5rem)]">
+  <!-- Sidebar -->
+  <aside class="w-64 bg-white border-r p-4 space-y-4">
+    <h3 class="text-lg font-semibold">Agencias</h3>
+    <button
+      class="mb-4 w-full bg-indigo-600 text-white text-sm px-2 py-2 rounded hover:bg-indigo-700"
+      (click)="addAgency('Agencia ' + nodeCounter)"
+    >
+      ➕ Agregar Agencia
+    </button>
 
-<mat-card>
-  <mat-card-header>
-    <mat-card-title>Designer (Mock)</mat-card-title>
-  </mat-card-header>
-  <mat-card-content>
-    <p>Esta es una vista mockeada de <strong>designer</strong> usando Angular Material.</p>
-    <mat-form-field appearance="outline">
-      <mat-label>Buscar</mat-label>
-      <input matInput placeholder="Filtrar elementos..." />
-    </mat-form-field>
-    <mat-table [dataSource]="[{
-      id: 1, name: 'Elemento de prueba', status: 'activo'
-    }]" class="mat-elevation-z2">
-      <ng-container matColumnDef="id">
-        <mat-header-cell *matHeaderCellDef>ID</mat-header-cell>
-        <mat-cell *matCellDef="let element">{{element.id}}</mat-cell>
-      </ng-container>
+    <h3 class="text-lg font-semibold">Agentes disponibles</h3>
+    <div *ngFor="let agent of availableAgents" class="border rounded p-3 mb-2 shadow-sm">
+      <div class="text-sm font-medium">{{ agent.name }}</div>
+      <div class="text-xs text-gray-600 mb-2">{{ agent.role }}</div>
 
-      <ng-container matColumnDef="name">
-        <mat-header-cell *matHeaderCellDef>Nombre</mat-header-cell>
-        <mat-cell *matCellDef="let element">{{element.name}}</mat-cell>
-      </ng-container>
+      <label class="block text-xs text-gray-500 mb-1">Asignar a agencia:</label>
+      <select [(ngModel)]="agent.selectedAgency" class="w-full border px-2 py-1 rounded text-sm mb-2">
+        <option [ngValue]="null">Sin agencia</option>
+        <option *ngFor="let agency of currentAgencies" [value]="agency.id">{{ agency.name }}</option>
+      </select>
 
-      <ng-container matColumnDef="status">
-        <mat-header-cell *matHeaderCellDef>Estado</mat-header-cell>
-        <mat-cell *matCellDef="let element">{{element.status}}</mat-cell>
-      </ng-container>
+      <button
+        (click)="addAgent(agent)"
+        class="w-full bg-blue-600 text-white text-sm px-2 py-1 rounded hover:bg-blue-700"
+      >
+        Agregar
+      </button>
+    </div>
 
-      <mat-header-row *matHeaderRowDef="['id', 'name', 'status']"></mat-header-row>
-      <mat-row *matRowDef="let row; columns: ['id', 'name', 'status'];"></mat-row>
-    </mat-table>
-  </mat-card-content>
-</mat-card>
+    <button
+      (click)="exportJSON()"
+      class="w-full bg-green-600 text-white text-sm px-2 py-2 rounded hover:bg-green-700"
+    >
+      Exportar agency.json
+    </button>
+  </aside>
+
+  <!-- Lienzo central -->
+  <main class="flex-1 bg-gray-50 p-4 overflow-auto">
+    <ng-draw-flow [formControl]="form" style="height: 100%; min-height: 600px;"></ng-draw-flow>
+  </main>
+</div>

@@ -1,0 +1,20 @@
+[
+  {
+    "id": "prj-001",
+    "name": "Proyecto Alpha",
+    "agencies": 3,
+    "status": "activo"
+  },
+  {
+    "id": "prj-002",
+    "name": "Proyecto Beta",
+    "agencies": 2,
+    "status": "pendiente"
+  },
+  {
+    "id": "prj-003",
+    "name": "Proyecto Gamma",
+    "agencies": 5,
+    "status": "activo"
+  }
+]

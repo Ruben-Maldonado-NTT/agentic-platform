@@ -1,0 +1,20 @@
+[
+  {
+    "id": "agent-001",
+    "name": "Coordinador General",
+    "role": "coordinator",
+    "status": "activo"
+  },
+  {
+    "id": "agent-002",
+    "name": "Extractor Web",
+    "role": "extractor",
+    "status": "activo"
+  },
+  {
+    "id": "agent-003",
+    "name": "Analizador de Datos",
+    "role": "evaluator",
+    "status": "inactivo"
+  }
+]

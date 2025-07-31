@@ -1,34 +1,48 @@
+<div class="p-4 space-y-4">
+  <h2 class="text-2xl font-semibold">Catálogo de MCPs</h2>
 
-<mat-card>
-  <mat-card-header>
-    <mat-card-title>Mcps Catalog (Mock)</mat-card-title>
-  </mat-card-header>
-  <mat-card-content>
-    <p>Esta es una vista mockeada de <strong>mcps-catalog</strong> usando Angular Material.</p>
-    <mat-form-field appearance="outline">
-      <mat-label>Buscar</mat-label>
-      <input matInput placeholder="Filtrar elementos..." />
-    </mat-form-field>
-    <mat-table [dataSource]="[{
-      id: 1, name: 'Elemento de prueba', status: 'activo'
-    }]" class="mat-elevation-z2">
-      <ng-container matColumnDef="id">
-        <mat-header-cell *matHeaderCellDef>ID</mat-header-cell>
-        <mat-cell *matCellDef="let element">{{element.id}}</mat-cell>
-      </ng-container>
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div
+      *ngFor="let mcp of mcps"
+      class="bg-white rounded-lg shadow p-4 flex flex-col justify-between"
+    >
+      <div>
+        <h3 class="text-lg font-semibold mb-1">{{ mcp.name }}</h3>
+        <p class="text-sm text-gray-600">Tipo: <strong>{{ mcp.type }}</strong></p>
+        <p class="text-sm mt-1">
+          Estado:
+          <span
+            class="inline-block px-2 py-1 text-xs rounded-full"
+            [ngClass]="{
+              'bg-green-100 text-green-700': mcp.status === 'activo',
+              'bg-yellow-100 text-yellow-700': mcp.status === 'experimental'
+            }"
+          >
+            {{ mcp.status }}
+          </span>
+        </p>
+      </div>
 
-      <ng-container matColumnDef="name">
-        <mat-header-cell *matHeaderCellDef>Nombre</mat-header-cell>
-        <mat-cell *matCellDef="let element">{{element.name}}</mat-cell>
-      </ng-container>
-
-      <ng-container matColumnDef="status">
-        <mat-header-cell *matHeaderCellDef>Estado</mat-header-cell>
-        <mat-cell *matCellDef="let element">{{element.status}}</mat-cell>
-      </ng-container>
-
-      <mat-header-row *matHeaderRowDef="['id', 'name', 'status']"></mat-header-row>
-      <mat-row *matRowDef="let row; columns: ['id', 'name', 'status'];"></mat-row>
-    </mat-table>
-  </mat-card-content>
-</mat-card>
+      <div class="mt-4 flex gap-2">
+        <button
+          (click)="viewMcp(mcp)"
+          class="text-sm text-blue-600 hover:underline"
+        >
+          Ver
+        </button>
+        <button
+          (click)="testMcp(mcp)"
+          class="text-sm text-purple-600 hover:underline"
+        >
+          Probar
+        </button>
+        <button
+          (click)="assignMcp(mcp)"
+          class="text-sm text-green-600 hover:underline"
+        >
+          Asignar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

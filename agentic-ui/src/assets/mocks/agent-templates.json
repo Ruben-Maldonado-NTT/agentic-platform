@@ -1,0 +1,7 @@
+[
+  { "id": "template-coordinator", "name": "Coordinador", "role": "coordinator" },
+  { "id": "template-evaluator", "name": "Evaluador", "role": "evaluator" },
+  { "id": "template-extractor", "name": "Extractor Web", "role": "extractor" },
+  { "id": "template-analyst", "name": "Analista de Datos", "role": "analyst" },
+  { "id": "template-rag", "name": "Buscador RAG", "role": "rag" }
+]

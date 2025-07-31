@@ -1,0 +1,20 @@
+[
+  {
+    "id": "llm-001",
+    "name": "GPT-4",
+    "provider": "OpenAI",
+    "status": "disponible"
+  },
+  {
+    "id": "llm-002",
+    "name": "Claude 3",
+    "provider": "Anthropic",
+    "status": "experimental"
+  },
+  {
+    "id": "llm-003",
+    "name": "Mistral 7B",
+    "provider": "Local",
+    "status": "disponible"
+  }
+]

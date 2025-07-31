@@ -1,0 +1,23 @@
+[
+  {
+    "id": "repo-001",
+    "agent": "agent-001",
+    "name": "coordinador-general",
+    "url": "https://github.com/example/coordinador-general",
+    "last_updated": "2025-07-28"
+  },
+  {
+    "id": "repo-002",
+    "agent": "agent-002",
+    "name": "extractor-web",
+    "url": "https://github.com/example/extractor-web",
+    "last_updated": "2025-07-26"
+  },
+  {
+    "id": "repo-003",
+    "agent": "agent-003",
+    "name": "analizador-datos",
+    "url": "https://github.com/example/analizador-datos",
+    "last_updated": "2025-07-25"
+  }
+]

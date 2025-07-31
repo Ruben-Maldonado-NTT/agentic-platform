@@ -1,34 +1,46 @@
+<div class="p-4 space-y-8">
+  <h2 class="text-2xl font-semibold">Dashboard</h2>
 
-<mat-card>
-  <mat-card-header>
-    <mat-card-title>Dashboard (Mock)</mat-card-title>
-  </mat-card-header>
-  <mat-card-content>
-    <p>Esta es una vista mockeada de <strong>dashboard</strong> usando Angular Material.</p>
-    <mat-form-field appearance="outline">
-      <mat-label>Buscar</mat-label>
-      <input matInput placeholder="Filtrar elementos..." />
-    </mat-form-field>
-    <mat-table [dataSource]="[{
-      id: 1, name: 'Elemento de prueba', status: 'activo'
-    }]" class="mat-elevation-z2">
-      <ng-container matColumnDef="id">
-        <mat-header-cell *matHeaderCellDef>ID</mat-header-cell>
-        <mat-cell *matCellDef="let element">{{element.id}}</mat-cell>
-      </ng-container>
+  <!-- Métricas -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-white p-4 rounded-lg shadow text-center">
+      <h3 class="text-sm text-gray-500">Proyectos</h3>
+      <p class="text-3xl font-bold">{{ metrics.projects }}</p>
+    </div>
+    <div class="bg-white p-4 rounded-lg shadow text-center">
+      <h3 class="text-sm text-gray-500">Agencias Activas</h3>
+      <p class="text-3xl font-bold">{{ metrics.agencies }}</p>
+    </div>
+    <div class="bg-white p-4 rounded-lg shadow text-center">
+      <h3 class="text-sm text-gray-500">Agentes Operativos</h3>
+      <p class="text-3xl font-bold">{{ metrics.agents }}</p>
+    </div>
+    <div class="bg-white p-4 rounded-lg shadow text-center">
+      <h3 class="text-sm text-gray-500">Errores Hoy</h3>
+      <p class="text-3xl font-bold text-red-600">{{ metrics.errors }}</p>
+    </div>
+  </div>
 
-      <ng-container matColumnDef="name">
-        <mat-header-cell *matHeaderCellDef>Nombre</mat-header-cell>
-        <mat-cell *matCellDef="let element">{{element.name}}</mat-cell>
-      </ng-container>
+  <!-- Gráficas -->
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+    <apx-chart
+      [series]="agentByAgencyOptions.series"
+      [chart]="agentByAgencyOptions.chart"
+      [xaxis]="agentByAgencyOptions.xaxis"
+      [title]="agentByAgencyOptions.title">
+    </apx-chart>
 
-      <ng-container matColumnDef="status">
-        <mat-header-cell *matHeaderCellDef>Estado</mat-header-cell>
-        <mat-cell *matCellDef="let element">{{element.status}}</mat-cell>
-      </ng-container>
+    <apx-chart
+      [series]="trafficOptions.series"
+      [chart]="trafficOptions.chart"
+      [title]="trafficOptions.title">
+    </apx-chart>
 
-      <mat-header-row *matHeaderRowDef="['id', 'name', 'status']"></mat-header-row>
-      <mat-row *matRowDef="let row; columns: ['id', 'name', 'status'];"></mat-row>
-    </mat-table>
-  </mat-card-content>
-</mat-card>
+    <apx-chart
+      [series]="mcpUsageOptions.series"
+      [chart]="mcpUsageOptions.chart"
+      [labels]="mcpUsageOptions.labels"
+      [title]="mcpUsageOptions.title">
+    </apx-chart>
+  </div>
+</div>
