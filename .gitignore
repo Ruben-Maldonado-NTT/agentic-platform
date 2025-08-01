@@ -29,6 +29,7 @@ pip-delete-this-directory.txt
 
 # angular
 .angular/
+agentic-ui/.angular
 
 # Node.js
 node_modules/

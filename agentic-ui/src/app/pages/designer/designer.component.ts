@@ -23,10 +23,19 @@ export class DesignerComponent implements OnInit {
   agentSearchQuery = '';
   selectedAgentIds: string[] = [];
   selectedAgencyForAgents: string | null = null;
+  showAgencyNameModal = false;
+  newAgencyName: string = '';
+  showDeleteAgencyModal = false;
+  agencyToDelete: { id: string; name: string } | null = null;
 
-  constructor(private http: HttpClient, private flowModel: FlowModelService) {}
+  constructor(private http: HttpClient, private flowService: FlowModelService) {}
 
   ngOnInit(): void {
+    this.flowService.agencyDeleteRequested$.subscribe(({ id, name }) => {
+      console.log('Evento recibido:', id, name);
+
+      this.openDeleteAgencyModal(id, name);
+    });
     this.http.get<any[]>('/assets/mocks/agent-templates.json').subscribe({
       next: (data) => {
         this.availableAgents = data || [];
@@ -36,7 +45,77 @@ export class DesignerComponent implements OnInit {
       }
     });
 
-    this.flowModel.setModel(this.form.value!);
+    this.flowService.setModel(this.form.value!);
+  }
+  confirmDeleteAgency() {
+    if (!this.agencyToDelete) return;
+
+    this.deleteAgency(this.agencyToDelete.id);
+    this.closeDeleteAgencyModal();
+  }
+
+  openDeleteAgencyModal(id: string, name: string) {
+    this.agencyToDelete = { id, name };
+    this.showDeleteAgencyModal = true;
+  }
+
+  closeDeleteAgencyModal() {
+    this.showDeleteAgencyModal = false;
+    this.agencyToDelete = null;
+  }
+
+  openAgencyNameModal() {
+    this.newAgencyName = '';
+    this.showAgencyNameModal = true;
+  }
+
+  closeAgencyNameModal() {
+    this.showAgencyNameModal = false;
+  }
+  deleteAgency(id: string) {
+    const updated = {
+      ...this.form.value,
+      nodes: this.form.value.nodes.filter(n =>
+        n.id !== id && ('group' in n ? n.group !== id : true)
+      )
+    };
+
+    this.form.setValue(updated);
+
+    this.currentAgencies = updated.nodes
+      .filter(n => n.data?.type === 'agencyGroup')
+      .map(n => ({ id: n.id, name: n.data.name }));
+  }
+
+  confirmAgencyName() {
+    if (!this.newAgencyName.trim()) return;
+
+    const agencyId = crypto.randomUUID();  // o tu método actual
+    const node = {
+      id: agencyId,
+      data: {
+        name: this.newAgencyName,
+        type: 'agencyGroup'
+      },
+      position: {
+        x: 100 + Math.random() * 200,
+        y: 100 + Math.random() * 200
+      }
+    };
+
+    const current = this.form.value;
+    const updated = {
+      ...current,
+      nodes: [...current.nodes, node]
+    };
+    this.form.setValue(updated);
+    this.currentAgencies = this.form.value.nodes
+    .filter(n => n.data?.type === 'agencyGroup')
+    .map(n => ({
+      id: n.id,
+      name: n.data.name || '(sin nombre)'
+    }));
+    this.closeAgencyNameModal();
   }
 
   openAgentSelectorModal(): void {
@@ -92,7 +171,7 @@ export class DesignerComponent implements OnInit {
 
     const newModel = { ...model };
     this.form.setValue(newModel);
-    this.flowModel.setModel(newModel);
+    this.flowService.setModel(newModel);
     this.closeAgentSelectorModal();
   }
 
@@ -117,7 +196,7 @@ export class DesignerComponent implements OnInit {
     model.nodes = [...model.nodes, agencyNode];
     const newModel = { ...model };
     this.form.setValue(newModel);
-    this.flowModel.setModel(newModel);
+    this.flowService.setModel(newModel);
   }
   
 
@@ -146,7 +225,7 @@ export class DesignerComponent implements OnInit {
       id: newId,
       position: { x, y },
       data: {
-        type: hasAgency ? 'agentEmbedded' : 'agentNode', // ❗ este es el truco clave
+        type: 'agencyGroup', // ❗ este es el truco clave
         name: agentTemplate.name,
         role: agentTemplate.role,
         agencyId: agentTemplate.selectedAgency || null
@@ -175,7 +254,7 @@ export class DesignerComponent implements OnInit {
 
     const newModel = { ...model };
     this.form.setValue(newModel);
-    this.flowModel.setModel(newModel);
+    this.flowService.setModel(newModel);
   }
 
 
@@ -206,7 +285,7 @@ export class DesignerComponent implements OnInit {
       model.nodes[index] = this.selectedNode;
       const newModel = { ...model };
       this.form.setValue(newModel);
-      this.flowModel.setModel(newModel);
+      this.flowService.setModel(newModel);
       this.selectedNode = null;
     }
   }
@@ -231,7 +310,7 @@ export class DesignerComponent implements OnInit {
 
     const newModel = { ...model };
     this.form.setValue(newModel);
-    this.flowModel.setModel(newModel);
+    this.flowService.setModel(newModel);
   }
 
   exportJSON(): void {
@@ -247,4 +326,61 @@ export class DesignerComponent implements OnInit {
       this.selectedAgentIds = this.selectedAgentIds.filter(id => id !== agentId);
     }
   }
+  exportAgencyJson() {
+    const model = this.form.value; // <- tu modelo completo de nodos/edges
+    const json = JSON.stringify(model, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+  
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'agency.json';
+    a.click();
+  
+    URL.revokeObjectURL(url);
+  }
+  onImportAgencyJson(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+  
+    const file = input.files[0];
+    const reader = new FileReader();
+  
+    reader.onload = () => {
+      try {
+        const content = reader.result as string;
+        const parsed = JSON.parse(content);
+  
+        if (!parsed.nodes || !Array.isArray(parsed.nodes)) {
+          throw new Error('Formato inválido: falta "nodes"');
+        }
+  
+        // 🔁 Paso 1: reset visual
+        this.form.setValue({ nodes: [], connections: [] });
+
+  
+        // 🔁 Paso 2: forzar el nuevo valor en el siguiente tick
+        setTimeout(() => {
+          // ✅ Clonamos para romper referencia
+          const model = JSON.parse(JSON.stringify(parsed));
+          this.form.setValue(model);
+  
+          // 🔄 Refrescar lista lateral de agencias
+          this.currentAgencies = model.nodes
+            .filter((n: any) => n.data?.type === 'agencyGroup')
+            .map((n: any) => ({ id: n.id, name: n.data.name }));
+  
+        }, 0);
+  
+      } catch (err) {
+        console.error('[Importar JSON] Error al procesar archivo:', err);
+        alert('El archivo no es un JSON válido de agencia.');
+      }
+    };
+  
+    reader.readAsText(file);
+  }
+  
+  
+  
 }

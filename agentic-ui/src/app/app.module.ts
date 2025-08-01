@@ -16,8 +16,8 @@ import { LlmsComponent } from './pages/llms/llms.component';
 import { TestComponent } from './pages/test/test.component';
 import { ReposComponent } from './pages/repos/repos.component';
 import { UsersComponent } from './pages/users/users.component';
-import { AgentNodeComponent } from './pages/designer/agent-node.component';
-import { AgencyGroupComponent } from './pages/designer/agency-group.component';
+import { AgentNodeComponent } from './pages/designer/agent-node/agent-node.component';
+import { AgencyGroupComponent } from './pages/designer/agency-group/agency-group.component';
 import { FilterPipe } from './shared/pipes/filter.pipe';
 
 import { FormsModule,ReactiveFormsModule } from '@angular/forms';

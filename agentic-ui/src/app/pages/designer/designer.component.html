@@ -5,7 +5,7 @@
     <h3 class="text-lg font-semibold">Agencias</h3>
     <button
       class="mb-4 w-full bg-indigo-600 text-white text-sm px-2 py-2 rounded hover:bg-indigo-700"
-      (click)="addAgency('Agencia ' + nodeCounter)" 
+      (click)="openAgencyNameModal()"
     >
       ➕ Agregar Agencia
     </button>
@@ -22,11 +22,24 @@
 
     <!-- Exportar JSON -->
     <button
-      (click)="exportJSON()"
       class="w-full bg-green-600 text-white text-sm px-2 py-2 rounded hover:bg-green-700"
-    >
-      Exportar agency.json
+      (click)="exportAgencyJson()">
+      Exportar design.json
     </button>
+    <label
+      for="importJson"
+      class="w-full mt-2 bg-yellow-500 text-white text-sm px-2 py-2 rounded hover:bg-yellow-600 text-center cursor-pointer block"
+    >
+      📂 Importar design.json
+    </label>
+    <input
+      id="importJson"
+      type="file"
+      accept=".json"
+      (change)="onImportAgencyJson($event)"
+      hidden
+    />
+
   </aside>
 
   <!-- Área central de diseño -->
@@ -138,7 +151,12 @@
 
       <!-- Botón para confirmar -->
       <button
-        class="mt-6 w-full bg-blue-600 text-white text-sm px-4 py-2 rounded hover:bg-blue-700"
+        [class]="
+          'mt-6 w-full text-sm px-4 py-2 rounded ' +
+          (selectedAgentIds.length === 0 || !selectedAgencyForAgents
+            ? 'bg-blue-300 cursor-not-allowed'
+            : 'bg-blue-600 hover:bg-blue-700 text-white')
+        "
         (click)="addSelectedAgentsToAgency()"
         [disabled]="!selectedAgencyForAgents || selectedAgentIds.length === 0"
       >
@@ -146,5 +164,33 @@
       </button>
     </div>
   </div>
-
+  <div *ngIf="showAgencyNameModal" class="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center">
+    <div class="bg-white w-[400px] p-6 rounded-lg shadow-xl border">
+      <h2 class="text-xl font-semibold mb-4">Nombre de la nueva agencia</h2>
+      <input
+        type="text"
+        [(ngModel)]="newAgencyName"
+        placeholder="Introduce el nombre..."
+        class="w-full border px-3 py-2 rounded mb-4 text-sm"
+      />
+      <div class="flex justify-end gap-2">
+        <button class="px-4 py-2 bg-gray-200 rounded" (click)="closeAgencyNameModal()">Cancelar</button>
+        <button class="px-4 py-2 bg-blue-600 text-white rounded" (click)="confirmAgencyName()">Crear</button>
+      </div>
+    </div>
+  </div>
+  <div *ngIf="showDeleteAgencyModal" class="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center">
+    <div class="bg-white w-[400px] p-6 rounded-lg shadow-xl border">
+      <h2 class="text-xl font-semibold mb-4 text-red-600">Eliminar agencia</h2>
+      <p class="mb-4 text-sm text-gray-700">
+        ¿Seguro que deseas eliminar la agencia
+        <strong>Agencia {{ agencyToDelete?.name }}</strong>
+        y todos sus agentes embebidos?
+      </p>
+      <div class="flex justify-end gap-2">
+        <button class="px-4 py-2 bg-gray-200 rounded" (click)="closeDeleteAgencyModal()">Cancelar</button>
+        <button class="px-4 py-2 bg-red-600 text-white rounded" (click)="confirmDeleteAgency()">Eliminar</button>
+      </div>
+    </div>
+  </div>
 </div>
