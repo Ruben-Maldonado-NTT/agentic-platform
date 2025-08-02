@@ -17,14 +17,14 @@ export class UsersComponent implements OnInit {
   }
 
   deleteUser(user: any) {
-    const confirmed = confirm(`¿Eliminar usuario: ${user.name}?`);
+    const confirmed = confirm(`Delete user ${user.name}?`);
     if (confirmed) {
       this.users = this.users.filter(u => u.id !== user.id);
     }
   }
 
   changeRole(user: any) {
-    const newRole = prompt(`Nuevo rol para ${user.name} (admin/editor/viewer):`, user.role);
+    const newRole = prompt(`New role for ${user.name} (admin/editor/viewer):`, user.role);
     if (newRole) {
       user.role = newRole;
     }

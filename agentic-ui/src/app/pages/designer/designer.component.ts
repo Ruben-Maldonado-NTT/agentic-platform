@@ -3,6 +3,7 @@ import { FormControl } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { DfDataModel, DfConnectionPoint } from '@ng-draw-flow/core';
 import { FlowModelService } from './flow-model.service';
+import { Router, ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-designer',
@@ -15,6 +16,7 @@ export class DesignerComponent implements OnInit {
     connections: []
   });
 
+  editAgencyId: string | null = null;
   availableAgents: any[] = [];
   currentAgencies: { id: string; name: string }[] = [];
   nodeCounter = 0;
@@ -27,15 +29,42 @@ export class DesignerComponent implements OnInit {
   newAgencyName: string = '';
   showDeleteAgencyModal = false;
   agencyToDelete: { id: string; name: string } | null = null;
+  projectId: string | null = null;
+  isNewProject = false;
+  isEditMode = false
 
-  constructor(private http: HttpClient, private flowService: FlowModelService) {}
+  constructor(private http: HttpClient, 
+              private route: ActivatedRoute,
+              private router: Router,
+              private flowService: FlowModelService) {}
 
   ngOnInit(): void {
+    this.route.url.subscribe(segments => {
+      this.projectId = this.route.snapshot.paramMap.get('projectId');
+      this.isEditMode = this.route.snapshot.routeConfig?.path?.includes('edit');
+      this.isNewProject = segments.some(s => s.path === 'new');
+    });
+
+    if (this.isEditMode && this.projectId) {
+      this.loadProjectDesign(this.projectId);
+    }
+
+    if (this.isNewProject) {
+      console.log('🆕 Modo creación de proyecto', this.projectId);
+    }
+
     this.flowService.agencyDeleteRequested$.subscribe(({ id, name }) => {
-      console.log('Evento recibido:', id, name);
+      console.log('Event Delete received:', id, name);
 
       this.openDeleteAgencyModal(id, name);
     });
+    
+    this.flowService.agencyEditRequested$.subscribe(({ id, name }) => {
+      console.log('Event Edit received:', id, name);
+
+      this.onEditAgencyRequested(id, name);
+    });
+
     this.http.get<any[]>('/assets/mocks/agent-templates.json').subscribe({
       next: (data) => {
         this.availableAgents = data || [];
@@ -47,6 +76,22 @@ export class DesignerComponent implements OnInit {
 
     this.flowService.setModel(this.form.value!);
   }
+
+  loadProjectDesign(id: string): void {
+    const stored = localStorage.getItem('projects');
+    const projects = stored ? JSON.parse(stored) : [];
+  
+    const project = projects.find((p: any) => p.id === id);
+    if (project?.design) {
+      this.form.setValue(project.design);
+      this.flowService.setModel(project.design);
+      console.log('🎨 Loaded design for project:', project.name);
+    } else {
+      console.warn('⚠️ Project not found or has no design:', id);
+    }
+  }
+  
+
   confirmDeleteAgency() {
     if (!this.agencyToDelete) return;
 
@@ -64,14 +109,17 @@ export class DesignerComponent implements OnInit {
     this.agencyToDelete = null;
   }
 
-  openAgencyNameModal() {
-    this.newAgencyName = '';
+  openAgencyNameModal(existingAgency?: { id: string, name: string }) {
+    this.newAgencyName = existingAgency?.name || '';
+    this.editAgencyId = existingAgency?.id || null;
     this.showAgencyNameModal = true;
   }
 
   closeAgencyNameModal() {
     this.showAgencyNameModal = false;
+    this.editAgencyId = null;
   }
+
   deleteAgency(id: string) {
     const updated = {
       ...this.form.value,
@@ -89,35 +137,82 @@ export class DesignerComponent implements OnInit {
 
   confirmAgencyName() {
     if (!this.newAgencyName.trim()) return;
-
-    const agencyId = crypto.randomUUID();  // o tu método actual
-    const node = {
-      id: agencyId,
-      data: {
-        name: this.newAgencyName,
-        type: 'agencyGroup'
-      },
-      position: {
-        x: 100 + Math.random() * 200,
-        y: 100 + Math.random() * 200
+  
+    const model = this.form.value!;
+  
+    // 🔁 Clonamos y actualizamos los nodos
+    const updatedNodes = model.nodes.map(node => {
+      if (
+        this.editAgencyId &&
+        node.id === this.editAgencyId &&
+        node.data?.type === 'agencyGroup'
+      ) {
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            name: this.newAgencyName.trim(),
+            highlight: true // Marca para resaltar visualmente
+          }
+        };
       }
+      return node;
+    });
+  
+    // ➕ Si es nueva agencia, agregarla
+    if (!this.editAgencyId) {
+      const agencyId = crypto.randomUUID();
+      const newNode = {
+        id: agencyId,
+        data: {
+          name: this.newAgencyName.trim(),
+          type: 'agencyGroup',
+          highlight: true
+        },
+        position: {
+          x: 100 + Math.random() * 200,
+          y: 100 + Math.random() * 200
+        }
+      };
+      updatedNodes.push(newNode);
+    }
+  
+    const updatedModel = {
+      ...model,
+      nodes: updatedNodes
     };
-
-    const current = this.form.value;
-    const updated = {
-      ...current,
-      nodes: [...current.nodes, node]
-    };
-    this.form.setValue(updated);
-    this.currentAgencies = this.form.value.nodes
-    .filter(n => n.data?.type === 'agencyGroup')
-    .map(n => ({
-      id: n.id,
-      name: n.data.name || '(sin nombre)'
-    }));
+  
+    // 🧠 Refresca el formulario y el flujo
+    this.form.setValue(updatedModel);
+    this.flowService.setModel(updatedModel);
+  
+    // 🔄 Elimina el highlight tras 800ms
+    setTimeout(() => {
+      const cleanNodes = this.form.value.nodes.map(n =>
+        n.data?.highlight
+          ? { ...n, data: { ...n.data, highlight: false } }
+          : n
+      );
+      this.form.setValue({ ...this.form.value, nodes: cleanNodes });
+    }, 800);
+  
+    // 🔁 Refrescar lista lateral de agencias
+    this.currentAgencies = updatedModel.nodes
+      .filter(n => n.data?.type === 'agencyGroup')
+      .map(n => ({
+        id: n.id,
+        name: n.data.name || '(unnamed)'
+      }));
+  
     this.closeAgencyNameModal();
   }
-
+  
+  
+  
+  onEditAgencyRequested(id: string, name: string) {
+    this.openAgencyNameModal({id, name});
+  }
+  
   openAgentSelectorModal(): void {
     this.showAgentSelectorModal = true;
     this.selectedAgentIds = []; // <-- Vacía la selección al abrir el modal
@@ -131,28 +226,43 @@ export class DesignerComponent implements OnInit {
   addSelectedAgentsToAgency(): void {
     const model = this.form.value!;
     const agencyId = this.selectedAgencyForAgents;
-
-    if (!agencyId) return;
-
+  
+    // ❌ Si no se ha seleccionado agencia, cancela
+    if (!agencyId) {
+      alert('Debes seleccionar una agencia para agregar agentes.');
+      return;
+    }
+  
     const agencyNode = model.nodes.find(
       n => n.id === agencyId && n.data?.type === 'agencyGroup'
     );
-
+  
+    if (!agencyNode) {
+      console.warn('No se encontró la agencia seleccionada:', agencyId);
+      return;
+    }
+  
+    // Calculamos posición base cerca de la agencia
     let baseX = 100 + Math.random() * 300;
     let baseY = 100 + Math.random() * 300;
-
-    if ((agencyNode as any)?.position) {
-      baseX = (agencyNode as any).position.x + 60;
-      baseY = (agencyNode as any).position.y + 80;
+  
+    if ('position' in agencyNode && agencyNode.position) {
+      baseX = agencyNode.position.x + 60;
+      baseY = agencyNode.position.y + 80;
     }
-
+  
+    const newNodes = [];
     let counter = 0;
-    this.selectedAgentIds.forEach(agentId => {
+  
+    for (const agentId of this.selectedAgentIds) {
       const template = this.availableAgents.find(a => a.id === agentId);
-      if (!template) return;
-
+      if (!template) continue;
+  
+      const nodeId = `agent-${this.nodeCounter++}`;
+  
       const newNode = {
-        id: `node-${this.nodeCounter++}`,
+        id: nodeId,
+        group: agencyId, // 👈 asegura que va dentro de la agencia
         position: {
           x: baseX + (counter % 2) * 120,
           y: baseY + Math.floor(counter / 2) * 100
@@ -164,16 +274,24 @@ export class DesignerComponent implements OnInit {
           agencyId
         }
       };
-
-      model.nodes.push(newNode);
+  
+      newNodes.push(newNode);
       counter++;
-    });
-
-    const newModel = { ...model };
-    this.form.setValue(newModel);
-    this.flowService.setModel(newModel);
+    }
+  
+    // 🔁 Solo actualiza el modelo si hay nodos nuevos
+    if (newNodes.length > 0) {
+      const updatedModel = {
+        ...model,
+        nodes: [...model.nodes, ...newNodes]
+      };
+      this.form.setValue(updatedModel);
+      this.flowService.setModel(updatedModel);
+    }
+  
     this.closeAgentSelectorModal();
   }
+  
 
 
   addAgency(name: string): void {
@@ -198,65 +316,6 @@ export class DesignerComponent implements OnInit {
     this.form.setValue(newModel);
     this.flowService.setModel(newModel);
   }
-  
-
-  addAgent(agentTemplate: any): void {
-    const model = this.form.value!;
-    const newId = `node-${this.nodeCounter++}`;
-
-    // Posición por defecto
-    let x = 100 + Math.random() * 300;
-    let y = 100 + Math.random() * 300;
-
-    const hasAgency = !!agentTemplate.selectedAgency;
-
-    // Si tiene agencia asignada → colócalo dentro
-    if (hasAgency) {
-      const agencyNode = model.nodes.find(
-        n => n.id === agentTemplate.selectedAgency && n.data?.type === 'agencyGroup'
-      );
-      if ((agencyNode as any)?.position) {
-        x = (agencyNode as any).position.x + 40 + Math.random() * 100;
-        y = (agencyNode as any).position.y + 60 + Math.random() * 100;
-      }
-    }
-
-    const newNode = {
-      id: newId,
-      position: { x, y },
-      data: {
-        type: 'agencyGroup', // ❗ este es el truco clave
-        name: agentTemplate.name,
-        role: agentTemplate.role,
-        agencyId: agentTemplate.selectedAgency || null
-      }
-    };
-
-    model.nodes = [...model.nodes, newNode];
-
-    // Conexión automática
-    if (model.nodes.length > 1) {
-      const previous = model.nodes[model.nodes.length - 2];
-      const connection = {
-        source: {
-          nodeId: previous.id,
-          connectorType: DfConnectionPoint.Output,
-          connectorId: `${previous.id}-out`
-        },
-        target: {
-          nodeId: newId,
-          connectorType: DfConnectionPoint.Input,
-          connectorId: `${newId}-in`
-        }
-      };
-      model.connections = [...model.connections, connection];
-    }
-
-    const newModel = { ...model };
-    this.form.setValue(newModel);
-    this.flowService.setModel(newModel);
-  }
-
 
   onNodeSelected(event: any) {
     const nodeId = event?.id || event?.nodeId;
@@ -270,7 +329,7 @@ export class DesignerComponent implements OnInit {
     const node = model.nodes.find(n => n.id === nodeId);
 
     if (node?.data?.type === 'agentNode') {
-      console.log('🟢 Nodo agente seleccionado:', node);
+      console.log('🟢 Agent Node selected:', node);
       this.selectedNode = node;
     } else {
       this.selectedNode = null;
@@ -352,7 +411,7 @@ export class DesignerComponent implements OnInit {
         const parsed = JSON.parse(content);
   
         if (!parsed.nodes || !Array.isArray(parsed.nodes)) {
-          throw new Error('Formato inválido: falta "nodes"');
+          throw new Error('Invalid format: need "nodes"');
         }
   
         // 🔁 Paso 1: reset visual
@@ -373,14 +432,33 @@ export class DesignerComponent implements OnInit {
         }, 0);
   
       } catch (err) {
-        console.error('[Importar JSON] Error al procesar archivo:', err);
-        alert('El archivo no es un JSON válido de agencia.');
+        console.error('[Import JSON] Error processing the file:', err);
+        alert('The file is not a valid agency JSON or is missing the "nodes" property.');
       }
     };
   
     reader.readAsText(file);
   }
+  saveNewProject(): void {
+    const model = this.form.value!;
+    const newProject = {
+      id: this.projectId,
+      name: `Proyecto ${new Date().toLocaleDateString()}`,
+      agencies: model.nodes.filter(n => n.data?.type === 'agencyGroup').length,
+      state: 'activo',
+      design: model
+    };
   
+    console.log('💾 Proyecto guardado:', newProject);
   
+    // Aquí puedes:
+    // - Guardarlo en localStorage
+    // - Enviar a un backend simulado
+    // - Emitirlo a un servicio compartido
+  
+    alert('✅ Proyecto guardado correctamente');
+  
+    this.router.navigate(['/projects']);
+  }
   
 }

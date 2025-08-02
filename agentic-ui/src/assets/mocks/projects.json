@@ -3,18 +3,18 @@
     "id": "prj-001",
     "name": "Proyecto Alpha",
     "agencies": 3,
-    "status": "activo"
+    "status": "active"
   },
   {
     "id": "prj-002",
     "name": "Proyecto Beta",
     "agencies": 2,
-    "status": "pendiente"
+    "status": "pending"
   },
   {
     "id": "prj-003",
     "name": "Proyecto Gamma",
     "agencies": 5,
-    "status": "activo"
+    "status": "active"
   }
 ]

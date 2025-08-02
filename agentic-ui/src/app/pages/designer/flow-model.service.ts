@@ -7,6 +7,7 @@ import { Subject } from 'rxjs';
 export class FlowModelService {
   private model$ = new BehaviorSubject<DfDataModel>({ nodes: [], connections: [] });
   public agencyDeleteRequested$ = new Subject<{ id: string; name: string }>();
+  public agencyEditRequested$ = new Subject<{ id: string; name: string }>();
 
   modelValue$ = this.model$.asObservable();
 

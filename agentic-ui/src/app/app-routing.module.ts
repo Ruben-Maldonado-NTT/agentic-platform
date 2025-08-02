@@ -8,23 +8,29 @@ import { LlmsComponent } from './pages/llms/llms.component';
 import { TestComponent } from './pages/test/test.component';
 import { ReposComponent } from './pages/repos/repos.component';
 import { UsersComponent } from './pages/users/users.component';
+import { AgentFormComponent } from './pages/agent-form/agent-form.component';
 
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
 const routes: Routes = [
-{ path: 'dashboard', component: DashboardComponent },
-{ path: 'projects', component: ProjectsComponent },
-{ path: 'designer', component: DesignerComponent },
-{ path: 'agents-catalog', component: AgentsCatalogComponent },
-{ path: 'mcps-catalog', component: McpsCatalogComponent },
-{ path: 'mcps-manage', component: McpsManageComponent },
-{ path: 'llms', component: LlmsComponent },
-{ path: 'test', component: TestComponent },
-{ path: 'repos', component: ReposComponent },
-{ path: 'users', component: UsersComponent },
+  { path: 'agents', component: AgentsCatalogComponent },
+  { path: 'agents/new', component: AgentFormComponent },
+  { path: 'agents/:id/edit', component: AgentFormComponent },
+  { path: 'designer/:projectId/new', component: DesignerComponent },  
+  { path: 'designer/:projectId/edit', component: DesignerComponent },
+  { path: 'designer/:projectId', component: DesignerComponent }, 
+  { path: 'dashboard', component: DashboardComponent },
+  { path: 'projects', component: ProjectsComponent },
+  { path: 'designer', component: DesignerComponent },
+  { path: 'mcps-catalog', component: McpsCatalogComponent },
+  { path: 'mcps-manage', component: McpsManageComponent },
+  { path: 'llms', component: LlmsComponent },
+  { path: 'test', component: TestComponent },
+  { path: 'repos', component: ReposComponent },
+  { path: 'users', component: UsersComponent },
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
-];
+  ];
 
 @NgModule({
   imports: [RouterModule.forRoot(routes)],

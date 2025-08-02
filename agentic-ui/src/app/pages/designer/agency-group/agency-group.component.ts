@@ -15,7 +15,7 @@ export class AgencyGroupComponent extends DrawFlowBaseNode implements OnInit, On
   @Input() model: any;  // contiene el { name, type }
   @Input() nodeId: string = '';
 
-
+  @Output() editRequested = new EventEmitter<{ id: string, name: string }>();
   @Output() delete = new EventEmitter<{ id: string; name: string }>();
   childAgents: any[] = [];
   private sub!: Subscription;
@@ -53,6 +53,21 @@ export class AgencyGroupComponent extends DrawFlowBaseNode implements OnInit, On
       });
     }
   }
+  
+  onEditAgency() {
+    const id = this.nodeId;
+    const name = this.model.name;
+    if (id && name) {
+      this.flowService.agencyEditRequested$.next({ id, name });
+    } else {
+      console.warn('[AgencyGroupComponent] No se pudo emitir edit: id o name faltan', {
+        id,
+        name,
+        model: this.model
+      });
+    }
+  }
+
   ngOnDestroy() {
     this.sub?.unsubscribe();
   }

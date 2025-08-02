@@ -2,35 +2,37 @@
   <!-- Sidebar izquierda -->
   <aside class="w-72 bg-white border-r p-4 space-y-4 overflow-y-auto">
     <!-- Agencias -->
-    <h3 class="text-lg font-semibold">Agencias</h3>
+    <h3 class="text-lg font-semibold">Agency</h3>
     <button
       class="mb-4 w-full bg-indigo-600 text-white text-sm px-2 py-2 rounded hover:bg-indigo-700"
       (click)="openAgencyNameModal()"
     >
-      ➕ Agregar Agencia
+      ➕ Create Agency
     </button>
 
     <!-- Agentes disponibles -->
     <!-- Botón para agregar agentes (modal de tabla) -->
-    <h3 class="text-lg font-semibold mt-6">Agentes</h3>
+    <h3 class="text-lg font-semibold mt-6">Agent</h3>
     <button
       class="w-full bg-blue-600 text-white text-sm px-2 py-2 rounded hover:bg-blue-700"
       (click)="openAgentSelectorModal()"
     >
-      ➕ Agregar Agentes
+      ➕ Add Agent(s)
     </button>
-
+    
+    <!-- Agencias -->
+    <h3 class="text-lg font-semibold">Tools</h3>
     <!-- Exportar JSON -->
     <button
       class="w-full bg-green-600 text-white text-sm px-2 py-2 rounded hover:bg-green-700"
       (click)="exportAgencyJson()">
-      Exportar design.json
+      Export design.json
     </button>
     <label
       for="importJson"
       class="w-full mt-2 bg-yellow-500 text-white text-sm px-2 py-2 rounded hover:bg-yellow-600 text-center cursor-pointer block"
     >
-      📂 Importar design.json
+      📂 Import design.json
     </label>
     <input
       id="importJson"
@@ -38,7 +40,15 @@
       accept=".json"
       (change)="onImportAgencyJson($event)"
       hidden
-    />
+    /> 
+    <div *ngIf="isNewProject" class="mb-4">
+      <button
+        class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+        (click)="saveNewProject()"
+      >
+        💾 Save Project
+      </button>
+    </div>
 
   </aside>
 
@@ -56,23 +66,23 @@
       *ngIf="selectedNode"
       class="absolute top-0 right-0 w-80 h-full bg-white border-l shadow p-4 space-y-4 z-10"
     >
-      <h3 class="text-lg font-semibold">Editar Agente</h3>
+      <h3 class="text-lg font-semibold">Edit Agent</h3>
 
-      <label class="block text-sm">Nombre</label>
+      <label class="block text-sm">Name</label>
       <input
         [(ngModel)]="selectedNode.data.name"
         class="w-full border px-2 py-1 rounded"
       />
 
-      <label class="block text-sm mt-2">Rol</label>
+      <label class="block text-sm mt-2">Role</label>
       <input
         [(ngModel)]="selectedNode.data.role"
         class="w-full border px-2 py-1 rounded"
       />
 
-      <label class="block text-sm mt-2">Agencia</label>
+      <label class="block text-sm mt-2">Agency</label>
       <select [(ngModel)]="selectedNode.data.agencyId" class="w-full border px-2 py-1 rounded">
-        <option [ngValue]="null">Sin agencia</option>
+        <option [ngValue]="null">Without agency</option>
         <option *ngFor="let agency of currentAgencies" [value]="agency.id">
           {{ agency.name }}
         </option>
@@ -82,13 +92,13 @@
         class="w-full bg-green-600 text-white py-2 mt-4 rounded hover:bg-green-700"
         (click)="updateNode()"
       >
-        Guardar cambios
+        Save
       </button>
       <button
         class="w-full text-gray-500 hover:text-red-600 text-sm"
         (click)="selectedNode = null"
       >
-        Cancelar
+        Cancel
       </button>
     </div>
   </main>
@@ -100,7 +110,7 @@
   >
     <div class="bg-white w-[700px] max-h-[80vh] overflow-y-auto p-6 rounded-lg shadow-xl border">
       <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-semibold">Agregar agentes a una agencia</h2>
+        <h2 class="text-xl font-semibold">Add agent to the agency</h2>
         <button class="text-gray-400 hover:text-black" (click)="closeAgentSelectorModal()">✖</button>
       </div>
 
@@ -113,12 +123,12 @@
       />
 
       <!-- Selección de agencia -->
-      <label class="block mb-1 text-sm">Seleccionar agencia</label>
+      <label class="block mb-1 text-sm">Select agency</label>
       <select
         [(ngModel)]="selectedAgencyForAgents"
         class="w-full border px-3 py-2 rounded mb-4 text-sm"
       >
-        <option [ngValue]="null">-- Elige una agencia --</option>
+        <option [ngValue]="null">-- Choose an agency --</option>
         <option *ngFor="let agency of currentAgencies" [value]="agency.id">{{ agency.name }}</option>
       </select>
 
@@ -127,8 +137,8 @@
         <thead>
           <tr class="text-left border-b">
             <th class="py-2">✔</th>
-            <th class="py-2">Nombre</th>
-            <th class="py-2">Rol</th>
+            <th class="py-2">Name</th>
+            <th class="py-2">Role</th>
           </tr>
         </thead>
         <tbody>
@@ -160,36 +170,44 @@
         (click)="addSelectedAgentsToAgency()"
         [disabled]="!selectedAgencyForAgents || selectedAgentIds.length === 0"
       >
-        ➕ Agregar {{ selectedAgentIds.length }} agente(s) a la agencia
+        ➕ Add {{ selectedAgentIds.length }} agent to the agency
       </button>
     </div>
   </div>
   <div *ngIf="showAgencyNameModal" class="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center">
-    <div class="bg-white w-[400px] p-6 rounded-lg shadow-xl border">
-      <h2 class="text-xl font-semibold mb-4">Nombre de la nueva agencia</h2>
+    <div 
+    class="relative rounded-lg shadow p-4 border transition duration-500"
+    [ngClass]="{
+      'bg-yellow-50 border-yellow-500 ring-2 ring-yellow-300': model?.data?.highlight,
+      'bg-white border-gray-300': !model?.data?.highlight
+    }"
+    >
+      <h2 class="text-xl font-bold mb-4">
+        {{ editAgencyId ? 'Edit agency name' : 'New agency name' }}
+      </h2>
       <input
         type="text"
         [(ngModel)]="newAgencyName"
-        placeholder="Introduce el nombre..."
+        placeholder="Agency name..."
         class="w-full border px-3 py-2 rounded mb-4 text-sm"
       />
       <div class="flex justify-end gap-2">
-        <button class="px-4 py-2 bg-gray-200 rounded" (click)="closeAgencyNameModal()">Cancelar</button>
-        <button class="px-4 py-2 bg-blue-600 text-white rounded" (click)="confirmAgencyName()">Crear</button>
+        <button class="px-4 py-2 bg-gray-200 rounded" (click)="closeAgencyNameModal()">Cancel</button>
+        <button class="px-4 py-2 bg-blue-600 text-white rounded" (click)="confirmAgencyName()">{{ editAgencyId ? 'Save' : 'Create' }}</button>
       </div>
     </div>
   </div>
   <div *ngIf="showDeleteAgencyModal" class="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center">
     <div class="bg-white w-[400px] p-6 rounded-lg shadow-xl border">
-      <h2 class="text-xl font-semibold mb-4 text-red-600">Eliminar agencia</h2>
+      <h2 class="text-xl font-semibold mb-4 text-red-600">Remove agency</h2>
       <p class="mb-4 text-sm text-gray-700">
-        ¿Seguro que deseas eliminar la agencia
-        <strong>Agencia {{ agencyToDelete?.name }}</strong>
-        y todos sus agentes embebidos?
+        Are you sure you want to remove the
+        <strong>Agency {{ agencyToDelete?.name }}</strong>
+        and all its agents? This action cannot be undone.
       </p>
       <div class="flex justify-end gap-2">
-        <button class="px-4 py-2 bg-gray-200 rounded" (click)="closeDeleteAgencyModal()">Cancelar</button>
-        <button class="px-4 py-2 bg-red-600 text-white rounded" (click)="confirmDeleteAgency()">Eliminar</button>
+        <button class="px-4 py-2 bg-gray-200 rounded" (click)="closeDeleteAgencyModal()">Cancel</button>
+        <button class="px-4 py-2 bg-red-600 text-white rounded" (click)="confirmDeleteAgency()">Delete</button>
       </div>
     </div>
   </div>

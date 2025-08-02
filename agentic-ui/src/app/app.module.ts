@@ -1,6 +1,6 @@
 import { AppRoutingModule } from './app-routing.module';
 
-import { NgModule } from '@angular/core';
+import { NgModule,CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { AppComponent } from './app.component';
 import { NgApexchartsModule } from 'ng-apexcharts';
@@ -19,10 +19,11 @@ import { UsersComponent } from './pages/users/users.component';
 import { AgentNodeComponent } from './pages/designer/agent-node/agent-node.component';
 import { AgencyGroupComponent } from './pages/designer/agency-group/agency-group.component';
 import { FilterPipe } from './shared/pipes/filter.pipe';
+import { AgentEmbeddedComponent } from './pages/designer/agent-embedded/agent-embedded.component'; 
 
 import { FormsModule,ReactiveFormsModule } from '@angular/forms';
 import { NgDrawFlowComponent, provideNgDrawFlowConfigs } from '@ng-draw-flow/core';
-
+import { AgentFormComponent } from './pages/agent-form/agent-form.component';
 
 @NgModule({
   declarations: [
@@ -35,11 +36,13 @@ import { NgDrawFlowComponent, provideNgDrawFlowConfigs } from '@ng-draw-flow/cor
     McpsManageComponent,
     LlmsComponent,
     TestComponent,
+    AgentEmbeddedComponent,
     ReposComponent,
     AgentNodeComponent,
     DesignerComponent,
     AgencyGroupComponent,
-    UsersComponent],
+    UsersComponent,
+    AgentFormComponent],
   imports: [  AppRoutingModule, 
               BrowserModule, 
               NgApexchartsModule,
@@ -52,10 +55,13 @@ import { NgDrawFlowComponent, provideNgDrawFlowConfigs } from '@ng-draw-flow/cor
     provideNgDrawFlowConfigs({
       nodes: {
         agentNode: AgentNodeComponent,
+        agentEmbedded: AgentEmbeddedComponent,
         agencyGroup: AgencyGroupComponent // ← Agregado
       }
     })
   ],
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA], // 👈 Esto permite Web Components como <df-input>
+
 })
 export class AppModule {}
