@@ -35,7 +35,25 @@
 
   <!-- Agentes embebidos dentro de esta agencia -->
   <div *ngFor="let agent of childAgents" class="bg-gray-100 rounded p-2 mb-2 shadow-sm">
-    <div class="font-medium text-sm">{{ agent.data.name }}</div>
-    <div class="text-xs text-gray-600">{{ agent.data.role }}</div>
+    <div class="relative bg-gray-50 rounded px-4 py-2 mb-2 flex items-center">
+      <!-- Contenido del agente -->
+      <div class="flex-1">
+        <span class="font-semibold">{{ agent?.data?.name }}</span><br />
+        <span class="text-sm text-gray-500">{{ agent?.data?.role }}</span>
+      </div>
+    
+      <!-- Botón de eliminar -->
+      <button
+        (click)="removeAgentFromAgency(agent.id)"
+        title="Remove agent"
+        class="ml-2 text-red-600 hover:text-red-800"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+             viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
   </div>
 </div>

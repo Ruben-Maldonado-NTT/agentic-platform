@@ -6,5 +6,15 @@ export class Agent {
       public type: 'agentEmbedded' = 'agentEmbedded',
       public highlight: boolean = false
     ) {}
+  
+    static from(data: any): Agent {
+      return new Agent(
+        data.name || '',
+        data.role || '',
+        data.agencyId || null,
+        data.type === 'agentEmbedded' ? 'agentEmbedded' : 'agentEmbedded',
+        !!data.highlight
+      );
+    }
   }
   

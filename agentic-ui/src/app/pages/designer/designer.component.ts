@@ -4,6 +4,9 @@ import { HttpClient } from '@angular/common/http';
 import { DfDataModel, DfConnectionPoint } from '@ng-draw-flow/core';
 import { FlowModelService } from './flow-model.service';
 import { Router, ActivatedRoute } from '@angular/router';
+import { Agency } from '../../models/agency.model';
+import { Agent } from '../../models/agent.model';
+
 
 @Component({
   selector: 'app-designer',
@@ -36,7 +39,7 @@ export class DesignerComponent implements OnInit {
   constructor(private http: HttpClient, 
               private route: ActivatedRoute,
               private router: Router,
-              private flowService: FlowModelService) {}
+              public flowService: FlowModelService) {}
 
   ngOnInit(): void {
     this.route.url.subscribe(segments => {
@@ -64,6 +67,12 @@ export class DesignerComponent implements OnInit {
 
       this.onEditAgencyRequested(id, name);
     });
+    
+    
+    this.flowService.agentRemoved$.subscribe(({ id }) => {
+      console.log('Event Remove agent received:', id);
+      this.removeAgentById(id);
+    });
 
     this.http.get<any[]>('/assets/mocks/agent-templates.json').subscribe({
       next: (data) => {
@@ -74,7 +83,7 @@ export class DesignerComponent implements OnInit {
       }
     });
 
-    this.flowService.setModel(this.form.value!);
+    this.updateAndSyncModel(this.form.value!)
   }
 
   loadProjectDesign(id: string): void {
@@ -83,8 +92,8 @@ export class DesignerComponent implements OnInit {
   
     const project = projects.find((p: any) => p.id === id);
     if (project?.design) {
-      this.form.setValue(project.design);
-      this.flowService.setModel(project.design);
+      this.updateAndSyncModel(project.design);
+
       console.log('🎨 Loaded design for project:', project.name);
     } else {
       console.warn('⚠️ Project not found or has no design:', id);
@@ -115,6 +124,16 @@ export class DesignerComponent implements OnInit {
     this.showAgencyNameModal = true;
   }
 
+  removeAgentById(agentId: string): void {
+    const model = this.flowService.getModel(); // ✅ modelo real
+    const updatedNodes = model.nodes.filter(n => n.id !== agentId);
+    const updatedModel = { ...model, nodes: updatedNodes };
+  
+    this.updateAndSyncModel(updatedModel);
+  
+    console.log('[Designer] Removed agent:', agentId);
+  }
+  
   closeAgencyNameModal() {
     this.showAgencyNameModal = false;
     this.editAgencyId = null;
@@ -128,84 +147,75 @@ export class DesignerComponent implements OnInit {
       )
     };
 
-    this.form.setValue(updated);
+    this.updateAndSyncModel(updated);
 
     this.currentAgencies = updated.nodes
       .filter(n => n.data?.type === 'agencyGroup')
       .map(n => ({ id: n.id, name: n.data.name }));
   }
 
-  confirmAgencyName() {
+  confirmAgencyName(): void {
     if (!this.newAgencyName.trim()) return;
   
-    const model = this.form.value!;
+    const model = this.flowService.getModel();
+    let updatedNodes = model.nodes;
   
-    // 🔁 Clonamos y actualizamos los nodos
-    const updatedNodes = model.nodes.map(node => {
-      if (
-        this.editAgencyId &&
-        node.id === this.editAgencyId &&
-        node.data?.type === 'agencyGroup'
-      ) {
-        return {
-          ...node,
-          data: {
-            ...node.data,
-            name: this.newAgencyName.trim(),
-            highlight: true // Marca para resaltar visualmente
-          }
-        };
-      }
-      return node;
-    });
-  
-    // ➕ Si es nueva agencia, agregarla
-    if (!this.editAgencyId) {
-      const agencyId = crypto.randomUUID();
-      const newNode = {
-        id: agencyId,
-        data: {
-          name: this.newAgencyName.trim(),
-          type: 'agencyGroup',
-          highlight: true
-        },
-        position: {
-          x: 100 + Math.random() * 200,
-          y: 100 + Math.random() * 200
+    if (this.editAgencyId) {
+      updatedNodes = model.nodes.map(node => {
+        if (node.id === this.editAgencyId && node.data?.type === 'agencyGroup') {
+          return {
+            ...node,
+            data: new Agency(this.newAgencyName.trim(), 'agencyGroup', true)
+          };
         }
-      };
-      updatedNodes.push(newNode);
+        return node;
+      });
+      console.log('📝 Updated agency:', updatedNodes);
+    } else {
+      const agencyId = crypto.randomUUID();
+      updatedNodes = [
+        ...model.nodes,
+        {
+          id: agencyId,
+          data: {
+            name: this.newAgencyName.trim(),
+            type: 'agencyGroup',
+            highlight: true
+          },
+          position: {
+            x: 100 + Math.random() * 200,
+            y: 100 + Math.random() * 200
+          }
+        }
+      ];
     }
   
-    const updatedModel = {
-      ...model,
-      nodes: updatedNodes
-    };
-  
-    // 🧠 Refresca el formulario y el flujo
-    this.form.setValue(updatedModel);
-    this.flowService.setModel(updatedModel);
-  
-    // 🔄 Elimina el highlight tras 800ms
+    const updatedModel = { ...model, nodes: updatedNodes };
+    // 💥 Paso 1: eliminamos temporalmente el modelo (reset total visual)
+    this.updateAndSyncModel({ nodes: [], connections: [] });
+
+    // 🕒 Paso 2: aplicamos el modelo nuevo tras un tick para que se re-renderice
     setTimeout(() => {
-      const cleanNodes = this.form.value.nodes.map(n =>
-        n.data?.highlight
-          ? { ...n, data: { ...n.data, highlight: false } }
-          : n
-      );
-      this.form.setValue({ ...this.form.value, nodes: cleanNodes });
-    }, 800);
+      this.updateAndSyncModel(updatedModel);
+
+      // ⏹️ Paso 3: limpiamos highlights si corresponde
+      setTimeout(() => {
+        const cleanNodes = updatedModel.nodes.map(n =>
+          n.data?.highlight
+            ? { ...n, data: { ...n.data, highlight: false } }
+            : n
+        );
+        this.updateAndSyncModel({ ...updatedModel, nodes: cleanNodes });
+      }, 800);
+    }, 0);
   
-    // 🔁 Refrescar lista lateral de agencias
     this.currentAgencies = updatedModel.nodes
       .filter(n => n.data?.type === 'agencyGroup')
-      .map(n => ({
-        id: n.id,
-        name: n.data.name || '(unnamed)'
-      }));
+      .map(n => ({ id: n.id, name: n.data.name || '(unnamed)' }));
   
     this.closeAgencyNameModal();
   }
+  
   
   
   
@@ -285,8 +295,7 @@ export class DesignerComponent implements OnInit {
         ...model,
         nodes: [...model.nodes, ...newNodes]
       };
-      this.form.setValue(updatedModel);
-      this.flowService.setModel(updatedModel);
+      this.updateAndSyncModel(updatedModel);
     }
   
     this.closeAgentSelectorModal();
@@ -295,12 +304,11 @@ export class DesignerComponent implements OnInit {
 
 
   addAgency(name: string): void {
+    const model = this.flowService.getModel();
     const newId = `agency-${this.nodeCounter++}`;
     const x = 50 + Math.random() * 200;
     const y = 50 + Math.random() * 200;
-
-    this.currentAgencies.push({ id: newId, name });
-
+  
     const agencyNode = {
       id: newId,
       position: { x, y },
@@ -309,13 +317,17 @@ export class DesignerComponent implements OnInit {
         name
       }
     };
-
-    const model = this.form.value!;
-    model.nodes = [...model.nodes, agencyNode];
-    const newModel = { ...model };
-    this.form.setValue(newModel);
-    this.flowService.setModel(newModel);
+  
+    const updatedModel = {
+      ...model,
+      nodes: [...model.nodes, agencyNode]
+    };
+  
+    this.updateAndSyncModel(updatedModel);
+  
+    this.currentAgencies.push({ id: newId, name });
   }
+  
 
   onNodeSelected(event: any) {
     const nodeId = event?.id || event?.nodeId;
@@ -343,8 +355,7 @@ export class DesignerComponent implements OnInit {
     if (index >= 0) {
       model.nodes[index] = this.selectedNode;
       const newModel = { ...model };
-      this.form.setValue(newModel);
-      this.flowService.setModel(newModel);
+      this.updateAndSyncModel(newModel);
       this.selectedNode = null;
     }
   }
@@ -368,12 +379,8 @@ export class DesignerComponent implements OnInit {
     });
 
     const newModel = { ...model };
-    this.form.setValue(newModel);
-    this.flowService.setModel(newModel);
-  }
+    this.updateAndSyncModel(newModel);
 
-  exportJSON(): void {
-    console.log('📤 agency.json:\n', JSON.stringify(this.form.value, null, 2));
   }
 
   onAgentCheckboxChange(agentId: string, checked: boolean): void {
@@ -385,8 +392,11 @@ export class DesignerComponent implements OnInit {
       this.selectedAgentIds = this.selectedAgentIds.filter(id => id !== agentId);
     }
   }
-  exportAgencyJson() {
-    const model = this.form.value; // <- tu modelo completo de nodos/edges
+
+  exportAgencyJson(): void {
+    const model = this.flowService.getModel(); // ✅ Ya lo has hecho así
+    console.log('[Export] Nodes:', model.nodes.map(n => n.id));
+  
     const json = JSON.stringify(model, null, 2);
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -398,47 +408,41 @@ export class DesignerComponent implements OnInit {
   
     URL.revokeObjectURL(url);
   }
+
   onImportAgencyJson(event: Event) {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
-  
+
     const file = input.files[0];
     const reader = new FileReader();
-  
+
     reader.onload = () => {
       try {
         const content = reader.result as string;
         const parsed = JSON.parse(content);
-  
+
         if (!parsed.nodes || !Array.isArray(parsed.nodes)) {
           throw new Error('Invalid format: need "nodes"');
         }
-  
-        // 🔁 Paso 1: reset visual
-        this.form.setValue({ nodes: [], connections: [] });
 
-  
-        // 🔁 Paso 2: forzar el nuevo valor en el siguiente tick
         setTimeout(() => {
-          // ✅ Clonamos para romper referencia
           const model = JSON.parse(JSON.stringify(parsed));
-          this.form.setValue(model);
-  
-          // 🔄 Refrescar lista lateral de agencias
+          this.updateAndSyncModel(model);
+
           this.currentAgencies = model.nodes
             .filter((n: any) => n.data?.type === 'agencyGroup')
             .map((n: any) => ({ id: n.id, name: n.data.name }));
-  
         }, 0);
-  
+
       } catch (err) {
         console.error('[Import JSON] Error processing the file:', err);
         alert('The file is not a valid agency JSON or is missing the "nodes" property.');
       }
     };
-  
+
     reader.readAsText(file);
   }
+
   saveNewProject(): void {
     const model = this.form.value!;
     const newProject = {
@@ -460,5 +464,8 @@ export class DesignerComponent implements OnInit {
   
     this.router.navigate(['/projects']);
   }
-  
+  private updateAndSyncModel(model: DfDataModel): void {
+    this.flowService.setModel(model);
+    this.form.setValue(model); // sincroniza el canvas
+  }  
 }

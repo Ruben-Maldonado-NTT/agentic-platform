@@ -8,14 +8,20 @@ export class FlowModelService {
   private model$ = new BehaviorSubject<DfDataModel>({ nodes: [], connections: [] });
   public agencyDeleteRequested$ = new Subject<{ id: string; name: string }>();
   public agencyEditRequested$ = new Subject<{ id: string; name: string }>();
-
-  modelValue$ = this.model$.asObservable();
+  public agentRemoved$ = new Subject<{ id: string}>();
+  private _model: DfDataModel = { nodes: [], connections: [] };
+  private modelValueSubject = new BehaviorSubject<DfDataModel>({ nodes: [], connections:[] });
+  modelValue$ = this.modelValueSubject.asObservable();
 
   setModel(model: DfDataModel) {
-    this.model$.next(model);
+    this.modelValueSubject.next(model);
   }
 
   getModel(): DfDataModel {
-    return this.model$.getValue();
+    return this.modelValueSubject.getValue();
+  }
+
+  get currentModelValue(): DfDataModel {
+    return this._model;
   }
 }

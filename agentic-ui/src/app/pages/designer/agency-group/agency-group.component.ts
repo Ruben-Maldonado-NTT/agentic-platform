@@ -4,6 +4,7 @@ import { EventEmitter, Input, Output } from '@angular/core';
 import { DrawFlowBaseNode } from '@ng-draw-flow/core';
 import { FlowModelService } from '../flow-model.service';
 import { Subscription } from 'rxjs';
+import { Agency } from '../../../models/agency.model';
 
 @Component({
   selector: 'app-agency-group',
@@ -15,6 +16,7 @@ export class AgencyGroupComponent extends DrawFlowBaseNode implements OnInit, On
   @Input() model: any;  // contiene el { name, type }
   @Input() nodeId: string = '';
 
+  @Output() agentRemoved = new EventEmitter<{ id: string, name: string }>();
   @Output() editRequested = new EventEmitter<{ id: string, name: string }>();
   @Output() delete = new EventEmitter<{ id: string; name: string }>();
   childAgents: any[] = [];
@@ -71,4 +73,21 @@ export class AgencyGroupComponent extends DrawFlowBaseNode implements OnInit, On
   ngOnDestroy() {
     this.sub?.unsubscribe();
   }
+  
+  removeAgentFromAgency(agentId: string) {
+    console.log('[AgencyGroupComponent] Removing agent:', agentId);
+
+    const id = this.nodeId;
+    const name = this.model.name;
+    if (id && name) {
+      this.flowService.agentRemoved$.next({ id: agentId});
+    } else {
+      console.warn('[AgencyGroupComponent] No se pudo emitir remove: id o name faltan', {
+        id,
+        name,
+        model: this.model
+      });
+    }
+  }
+
 }
