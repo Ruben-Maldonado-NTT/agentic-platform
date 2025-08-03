@@ -6,6 +6,8 @@ import { FlowModelService } from './flow-model.service';
 import { Router, ActivatedRoute } from '@angular/router';
 import { Agency } from '../../models/agency.model';
 import { Agent } from '../../models/agent.model';
+import type { ExtendedDfNode, ExtendedDfDataModel } from './flow-model.types';
+import type { DfDataConnector } from '@ng-draw-flow/core';
 
 
 @Component({
@@ -14,11 +16,12 @@ import { Agent } from '../../models/agent.model';
   styleUrls: ['./designer.component.css']
 })
 export class DesignerComponent implements OnInit {
+
   form = new FormControl<DfDataModel>({
     nodes: [],
     connections: []
   });
-
+  
   editAgencyId: string | null = null;
   availableAgents: any[] = [];
   currentAgencies: { id: string; name: string }[] = [];
@@ -35,6 +38,8 @@ export class DesignerComponent implements OnInit {
   projectId: string | null = null;
   isNewProject = false;
   isEditMode = false
+  connectingFrom: string | null = null;
+
 
   constructor(private http: HttpClient, 
               private route: ActivatedRoute,
@@ -157,48 +162,57 @@ export class DesignerComponent implements OnInit {
   confirmAgencyName(): void {
     if (!this.newAgencyName.trim()) return;
   
-    const model = this.flowService.getModel();
-    let updatedNodes = model.nodes;
+    const model = this.flowService.getModel() as ExtendedDfDataModel;
+    let updatedNodes: ExtendedDfNode[] = model.nodes;
   
     if (this.editAgencyId) {
+      // ✏️ Editar agencia existente
       updatedNodes = model.nodes.map(node => {
         if (node.id === this.editAgencyId && node.data?.type === 'agencyGroup') {
           return {
             ...node,
-            data: new Agency(this.newAgencyName.trim(), 'agencyGroup', true)
+            data: {
+              ...node.data,
+              name: this.newAgencyName.trim()
+            },
+            connectors: this.createConnectors(node.id)
           };
         }
         return node;
       });
-      console.log('📝 Updated agency:', updatedNodes);
     } else {
+      // ➕ Crear nueva agencia
       const agencyId = crypto.randomUUID();
-      updatedNodes = [
-        ...model.nodes,
-        {
-          id: agencyId,
-          data: {
-            name: this.newAgencyName.trim(),
-            type: 'agencyGroup',
-            highlight: true
-          },
-          position: {
-            x: 100 + Math.random() * 200,
-            y: 100 + Math.random() * 200
-          }
-        }
-      ];
+      const newNode: ExtendedDfNode = {
+        id: agencyId,
+        component: 'agencyGroup',
+        position: {
+          x: 100 + Math.random() * 200,
+          y: 100 + Math.random() * 200
+        },
+        data: {
+          name: this.newAgencyName.trim(),
+          type: 'agencyGroup',
+          highlight: true
+        },
+        connectors: this.createConnectors(agencyId)
+      };
+  
+      updatedNodes = [...model.nodes, newNode];
     }
   
-    const updatedModel = { ...model, nodes: updatedNodes };
-    // 💥 Paso 1: eliminamos temporalmente el modelo (reset total visual)
+    const updatedModel: ExtendedDfDataModel = {
+      ...model,
+      nodes: updatedNodes
+    };
+  
+    // 💥 Forzamos refresco visual del canvas
     this.updateAndSyncModel({ nodes: [], connections: [] });
-
-    // 🕒 Paso 2: aplicamos el modelo nuevo tras un tick para que se re-renderice
+  
     setTimeout(() => {
       this.updateAndSyncModel(updatedModel);
-
-      // ⏹️ Paso 3: limpiamos highlights si corresponde
+  
+      // ⏹️ Eliminamos el highlight para mostrar estado "estable"
       setTimeout(() => {
         const cleanNodes = updatedModel.nodes.map(n =>
           n.data?.highlight
@@ -209,15 +223,15 @@ export class DesignerComponent implements OnInit {
       }, 800);
     }, 0);
   
-    this.currentAgencies = updatedModel.nodes
+    // 🔄 Actualizamos la lista de agencias visibles en formularios
+    this.currentAgencies = updatedNodes
       .filter(n => n.data?.type === 'agencyGroup')
       .map(n => ({ id: n.id, name: n.data.name || '(unnamed)' }));
   
     this.closeAgencyNameModal();
+    this.editAgencyId = null;
+    this.newAgencyName = '';
   }
-  
-  
-  
   
   onEditAgencyRequested(id: string, name: string) {
     this.openAgencyNameModal({id, name});
@@ -409,39 +423,51 @@ export class DesignerComponent implements OnInit {
     URL.revokeObjectURL(url);
   }
 
-  onImportAgencyJson(event: Event) {
+  onImportAgencyJson(event: Event): void {
     const input = event.target as HTMLInputElement;
-    if (!input.files || input.files.length === 0) return;
-
+    if (!input.files?.length) return;
+  
     const file = input.files[0];
     const reader = new FileReader();
-
+  
     reader.onload = () => {
       try {
         const content = reader.result as string;
         const parsed = JSON.parse(content);
-
+  
         if (!parsed.nodes || !Array.isArray(parsed.nodes)) {
-          throw new Error('Invalid format: need "nodes"');
+          throw new Error('Invalid format: missing "nodes"');
         }
-
+  
+        const fullModel = JSON.parse(JSON.stringify(parsed));
+  
+        const onlyNodesModel = {
+          ...fullModel,
+          connections: [] // elimina conexiones temporalmente
+        };
+  
+        // Fase 1: carga nodos sin conexiones
+        this.updateAndSyncModel(onlyNodesModel);
+  
+        // Fase 2: tras delay, carga conexiones
         setTimeout(() => {
-          const model = JSON.parse(JSON.stringify(parsed));
-          this.updateAndSyncModel(model);
-
-          this.currentAgencies = model.nodes
+          this.updateAndSyncModel(fullModel);
+  
+          this.currentAgencies = fullModel.nodes
             .filter((n: any) => n.data?.type === 'agencyGroup')
             .map((n: any) => ({ id: n.id, name: n.data.name }));
-        }, 0);
-
+        }, 100); // puedes ajustar el delay si es necesario
+  
       } catch (err) {
         console.error('[Import JSON] Error processing the file:', err);
-        alert('The file is not a valid agency JSON or is missing the "nodes" property.');
+        alert('Invalid agency JSON.');
       }
     };
-
+  
     reader.readAsText(file);
   }
+  
+  
 
   saveNewProject(): void {
     const model = this.form.value!;
@@ -468,4 +494,59 @@ export class DesignerComponent implements OnInit {
     this.flowService.setModel(model);
     this.form.setValue(model); // sincroniza el canvas
   }  
+  createConnectors(nodeId: string): { [key: string]: DfDataConnector } {
+    const connectorIn: DfDataConnector = {
+      nodeId,
+      connectorId: `${nodeId}-in`,
+      connectorType: 'input' as DfConnectionPoint
+    };
+  
+    const connectorOut: DfDataConnector = {
+      nodeId,
+      connectorId: `${nodeId}-out`,
+      connectorType: 'output' as DfConnectionPoint
+    };
+  
+    return {
+      in: connectorIn,
+      out: connectorOut
+    };
+  }
+  handleStartConnection(fromAgencyId: string) {
+    console.log('[DesignerComponent] Starting connection from:', fromAgencyId);
+    this.connectingFrom = fromAgencyId;
+  }
+  
+  handleAgencyClicked(targetAgencyId: string): void {
+    console.log('[DesignerComponent] Agency clicked:', targetAgencyId);
+    if (!this.connectingFrom || this.connectingFrom === targetAgencyId) {
+      this.connectingFrom = null;
+      return;
+    }
+  
+    const model = this.flowService.getModel();
+  
+    const sourceNode = model.nodes.find(n => n.id === this.connectingFrom) as ExtendedDfNode;
+    const targetNode = model.nodes.find(n => n.id === targetAgencyId) as ExtendedDfNode;
+  
+    if (!sourceNode || !targetNode || !sourceNode.connectors?.out || !targetNode.connectors?.in) {
+      console.warn('❌ No se encontraron conectores válidos para conexión.');
+      this.connectingFrom = null;
+      return;
+    }
+  
+    const newConnection = {
+      source: sourceNode.connectors.out,
+      target: targetNode.connectors.in
+    };
+  
+    const updatedModel = {
+      ...model,
+      connections: [...model.connections, newConnection]
+    };
+  
+    this.updateAndSyncModel(updatedModel);
+    this.connectingFrom = null;
+  }
+  
 }

@@ -58,6 +58,8 @@
       [formControl]="form"
       (nodeSelected)="onNodeSelected($event)"
       (nodeMoved)="onNodeMoved($event)"
+      (startConnection)="handleStartConnection($event)"
+      (agencyClicked)="handleAgencyClicked($event)"
       style="height: 100%; min-height: 100vh;"
     ></ng-draw-flow>
 
@@ -212,4 +214,13 @@
       </div>
     </div>
   </div>
+  <!-- <button
+    class="fullscreen-btn"
+    size="s"
+    tuiButton
+    type="button"
+    (click)="saveNewProject()"
+  >
+    Save
+  </button> -->
 </div>

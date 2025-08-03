@@ -1,6 +1,26 @@
-<div class="bg-white border-2 border-blue-500 rounded shadow p-4 w-[280px] relative">
+
+<div (click)="onAgencyClick()" class="bg-white border-2 border-blue-500 rounded shadow p-4 w-[280px] relative">
+  <!-- Conector de entrada (izquierda centrado) -->
+  <div class="absolute -left-4 top-1/2 transform -translate-y-1/2">
+    <df-input [connectorData]="{ nodeId, connectorId: nodeId + '-in', single: false }"></df-input>
+  </div>
+  <!-- Conector de salida (derecha centrado) -->
+  <div class="absolute -right-4 top-1/2 transform -translate-y-1/2">
+    <df-output [connectorData]="{ nodeId, connectorId: nodeId + '-out', single: false }"></df-output>
+  </div>
   <!-- Icono papelera arriba a la derecha -->
   <div class="absolute top-2 right-2 flex gap-2">
+    <button
+      class="text-indigo-600 hover:text-indigo-800"
+      (click)="onStartConnection()"
+      title="Connect this agency"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+          viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M13 16h-1v-4h-1m4 4h1v-4h1m-4 0h1a1 1 0 011 1v2a1 1 0 01-1 1z" />
+      </svg>
+    </button>
     <!-- Edit icon -->
     <button
       class="text-blue-600 hover:text-blue-800"
@@ -28,6 +48,7 @@
     </button>
   </div>
 
+  
   <!-- Nombre de la agencia -->
   <div class="text-lg font-bold text-blue-700 mb-3">
     Agencia {{ model?.name || 'Unnamed agency' }}

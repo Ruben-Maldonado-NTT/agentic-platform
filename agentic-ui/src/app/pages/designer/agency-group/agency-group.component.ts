@@ -1,5 +1,6 @@
 import { Component, ChangeDetectorRef, OnInit, OnDestroy } from '@angular/core';
-import { EventEmitter, Input, Output } from '@angular/core';
+import { EventEmitter, Input, Output,SimpleChanges } from '@angular/core';
+import { DfInputComponent, DfOutputComponent, DfDataNode } from '@ng-draw-flow/core';
 
 import { DrawFlowBaseNode } from '@ng-draw-flow/core';
 import { FlowModelService } from '../flow-model.service';
@@ -15,10 +16,14 @@ export class AgencyGroupComponent extends DrawFlowBaseNode implements OnInit, On
   @Input() name: string = '';
   @Input() model: any;  // contiene el { name, type }
   @Input() nodeId: string = '';
+  @Input() allNodes: DfDataNode[] = [];
 
   @Output() agentRemoved = new EventEmitter<{ id: string, name: string }>();
   @Output() editRequested = new EventEmitter<{ id: string, name: string }>();
   @Output() delete = new EventEmitter<{ id: string; name: string }>();
+  @Output() startConnection = new EventEmitter<string>();
+  @Output() agencyClicked = new EventEmitter<string>();
+
   childAgents: any[] = [];
   private sub!: Subscription;
 
@@ -90,4 +95,19 @@ export class AgencyGroupComponent extends DrawFlowBaseNode implements OnInit, On
     }
   }
 
+  onStartConnection() {
+    console.log('[AgencyGroupComponent] Starting connection from node:', this.nodeId);
+    this.startConnection.emit(this.nodeId);  // nodeId ya lo tienes
+  }
+  
+  onAgencyClick() {
+    console.log('[AgencyGroupComponent] Agency clicked:', this.nodeId);
+    this.agencyClicked.emit(this.nodeId);  // para detectar clics normales
+  }
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes.allNodes || changes.model) {
+      const agencyId = this.model?.id;
+      this.childAgents = this.allNodes.filter(n => n.data?.agencyId === agencyId);
+    }
+  }
 }

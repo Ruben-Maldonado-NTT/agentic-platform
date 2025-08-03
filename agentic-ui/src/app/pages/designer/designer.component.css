@@ -2,3 +2,9 @@
   display: block;
   height: 100%;
 }
+
+.fullscreen-btn {
+  position: absolute;
+  right: 1.25rem;
+  top: 3.75rem;
+}
